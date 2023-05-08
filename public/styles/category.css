@@ -1,0 +1,31 @@
+.products {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(300px,300px));
+  margin-top: 50px;
+  column-gap: 90px;
+  row-gap: 40px;
+}
+
+p {
+  margin-top: 20px;
+}
+
+.product {
+  max-width: 300px;
+  box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px;
+  background-color: white;
+  transition: 200ms;
+  padding: 10px;
+  text-align: center;
+  border-radius: 4px;
+}
+
+.product:hover {
+  box-shadow: rgba(0, 0, 0, 0.25) 0px 14px 28px, rgba(0, 0, 0, 0.22) 0px 10px 10px;
+} 
+
+.product > a.title {
+  display: block;
+  color: gray;
+  text-decoration: none;
+}
