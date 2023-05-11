@@ -1,7 +1,7 @@
 - graphql-request add interfaces
 - do logging
-- improve categories unification
-- lookup decorators, may be some help for functions in api classes
+-+ improve categories unification
++ lookup decorators, may be some help for functions in api classes
 + decide what to do with process request
 - metatitle, metakeyword, metadescription auchan for product
 - format restApi responses
@@ -9,3 +9,6 @@
 - pipe
 - slugs
 - add limit to mysql queries
+
+
+- handle rest api status codes not ok (like in product.js file)

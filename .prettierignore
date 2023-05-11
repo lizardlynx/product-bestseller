@@ -1,0 +1,4 @@
+# Ignore artifacts:
+public/libs
+views
+logs
