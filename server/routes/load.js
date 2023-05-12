@@ -61,19 +61,19 @@ const load = (fastify, _, done) => {
 
     // need to load in chunks
     let data = {};
-    // for (const ids of idsAuchan) {
-    //   data = {};
-    //   console.log(ids);
-    //   const [initialId, dbId] = ids; //[5346, 12];//ids;
-    //   if (initialId == 5335) continue;
-    //   while (!('finished' in data)) {
-    //     data = await auchanApi.loadProductsByCategory([initialId]);
-    //     if (data.error) return processError(data.error, reply);
-    //     databaseService.addAuchanProductsToQuery(data.data, dbId);
-    //   }
-    //   await databaseService.insertProductsData();
-    //   // break;
-    // }
+    for (const ids of idsAuchan) {
+      data = {};
+      console.log(ids);
+      const [initialId, dbId] = ids; //[5346, 12];//ids;
+      if (initialId == 5335) continue;
+      while (!('finished' in data)) {
+        data = await auchanApi.loadProductsByCategory([initialId]);
+        if (data.error) return processError(data.error, reply);
+        databaseService.addAuchanProductsToQuery(data.data, dbId);
+      }
+      await databaseService.insertProductsData();
+      // break;
+    }
 
     console.log(idsSilpo);
     for (const ids of idsSilpo) {

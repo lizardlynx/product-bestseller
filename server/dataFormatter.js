@@ -233,6 +233,9 @@ class DataFormatter {
         else if (attribute.code == 'weight2') weight = attribute.value;
         else featureData.push(null, shopId, attribute.label, attribute.value);
       }
+      if (resolveBrand(brand) == 'dolcasan') {
+        console.log('here');
+      }
       this.#insertFeatureData.push(featureData);
       if (!weight) {
         const nameParts = product.name.split(',');

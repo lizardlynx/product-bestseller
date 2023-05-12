@@ -47,19 +47,20 @@ function resolveWeight(weight) {
     мл: 1,
     г: 1,
   };
+  weight = weight.replaceAll(' ', '');
+
   const numsMatch = /[0-9\.\,]+/g;
   const lettersMatch = /[а-яА-Я]+/g;
+
   let letters = weight.match(lettersMatch);
-  if (!letters) return null;
-  letters = letters[0].toLowerCase();
   let digits = weight.match(numsMatch);
-  if (!digits) return null;
-  digits = +digits[0];
+  if (!letters || !digits) return null;
+
+  digits = +digits[0].replaceAll(',', '.');
+  letters = letters[0].toLowerCase();
   const mult = lettersToG[letters];
-  if (!mult) return null;
-  const res = digits * mult;
-  if (!res) return null;
-  else return res;
+  if (mult) return digits * mult;
+  return null;
 }
 
 function resolveBrand(brand) {

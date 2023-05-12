@@ -44,9 +44,6 @@ class AuchanApi extends BaseApi {
       this.#getProductByCategoryVariables.currentPage,
       this.#getProductByCategoryTotalPages
     );
-    if (this.#getProductByCategoryVariables.currentPage == 53) {
-      console.log('here');
-    }
     const res = await this.#processAuchanRequest(
       gqlQueries.getProductsByCategory,
       this.#getProductByCategoryVariables

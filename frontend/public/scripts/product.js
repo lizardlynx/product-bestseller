@@ -96,7 +96,6 @@ async function loadPrices(productId) {
       4,
       resJSON[shopId]
     );
-    console.log(resJSON[shopId], shopId);
   }
   // const productDiv = createProductHTML(resJSON);
   // productHolder.appendChild(productDiv);

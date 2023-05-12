@@ -4,7 +4,6 @@ const dataFormatter = require('./dataFormatter.js');
 const db = require('./database.js');
 
 class DatabaseService {
-  #fastify;
   #fuseOptions = {
     includeScore: true,
     threshold: 0.3,
@@ -13,7 +12,6 @@ class DatabaseService {
   };
 
   init(fastify) {
-    this.#fastify = fastify;
     this.#getShopsIds(fastify);
   }
 
@@ -125,7 +123,6 @@ class DatabaseService {
       dataFormatter.getInsertProductsData();
 
     for (const productArrayPlace of Object.keys(categoriesToInsert)) {
-      console.log(productArrayPlace, categoriesToInsert);
       const category = categoriesToInsert[productArrayPlace];
       let dbCategoryId = categoriesObj[insertShop][category.categoryId];
       if (dbCategoryId === undefined) {

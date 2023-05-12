@@ -24,7 +24,6 @@ async function loadProducts(categoryId) {
     const productDiv = createProductHTML(product);
     productHolder.appendChild(productDiv);
   }
-  console.log(resJSON);
 }
 
 document.addEventListener('DOMContentLoaded', () => {

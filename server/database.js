@@ -179,54 +179,48 @@ class Database {
     return similar;
   }
 
+  #createQuestionMarkSet(matrix, insertLen = null) {
+    const length = matrix.length;
+    if (length == 0) return null;
+    const elementLength = insertLen ? insertLen : matrix[0].length;
+    const questionMarks =
+      '(' + new Array(elementLength).fill('?').join(', ') + ')';
+    const questionMarksSets = new Array(
+      insertLen ? matrix.flat(1).length / insertLen : matrix.length
+    )
+      .fill(questionMarks)
+      .join(', ');
+    return questionMarksSets;
+  }
+
+  #addQueryInsertData(matrix, query, promiseArr, insertLen = null) {
+    const questionMarkSet = this.#createQuestionMarkSet(matrix, insertLen);
+    if (!questionMarkSet) return;
+    const request = this.#connection.query(
+      query + ' ' + questionMarkSet,
+      matrix.flat(1)
+    );
+    promiseArr.push(request);
+  }
+
   async insertProductsData(pricesUpdate, featuresUpdate, insertData) {
     const { insertPriceData, insertFeatureData, insertProductData } =
       insertData;
+    const insertPriceLen = 5;
+    const insertFeatureLen = 4;
+    const promiseArr = [];
 
     await this.#createConnection();
-
-    const readyDataSetPriceUpdate = new Array(pricesUpdate.length)
-      .fill('(?, ?, ?, ?, ?)')
-      .join(', ');
-    const readyDataSetFeatureUpdate = new Array(featuresUpdate.length)
-      .fill('(?, ?, ?, ?)')
-      .join(', ');
-
-    const promiseArr = [];
-    if (pricesUpdate.length > 0)
-      promiseArr.push(
-        this.#connection.query(
-          queries.insertPrice + ' ' + readyDataSetPriceUpdate,
-          pricesUpdate.flat(1)
-        )
-      );
-    if (featuresUpdate.length > 0)
-      promiseArr.push(
-        this.#connection.query(
-          queries.insertFeatures + ' ' + readyDataSetFeatureUpdate,
-          featuresUpdate.flat(1)
-        )
-      );
+    this.#addQueryInsertData(pricesUpdate, queries.insertPrice, promiseArr);
+    this.#addQueryInsertData(
+      featuresUpdate,
+      queries.insertFeatures,
+      promiseArr
+    );
 
     if (insertFeatureData.length > 0) {
-      const priceInsertLen = 5;
-      const featureInsertLen = 4;
-      const productInsertLen = 7;
-
-      const neededSpacesPrice = insertPriceData.flat(1).length / priceInsertLen;
-      const neededSpacesFeature =
-        insertFeatureData.flat(1).length / featureInsertLen;
-      const neededSpacesProduct =
-        insertProductData.flat(1).length / productInsertLen;
-      const readyDataSetPrice = new Array(neededSpacesPrice)
-        .fill('(?, ?, ?, ?, ?)')
-        .join(', ');
-      const readyDataSetFeature = new Array(neededSpacesFeature)
-        .fill('(?, ?, ?, ?)')
-        .join(', ');
-      const readyDataSetProduct = new Array(neededSpacesProduct)
-        .fill('(?, ?, ?, ?, ?, ?, ?)')
-        .join(', ');
+      const readyDataSetProduct =
+        this.#createQuestionMarkSet(insertProductData);
 
       const [rows, fields] = await this.#connection.query(
         queries.insertProduct + ' ' + readyDataSetProduct,
@@ -237,24 +231,26 @@ class Database {
       for (let i = 0; i < insertPriceData.length; i++) {
         const productPrice = insertPriceData[i];
         const productFeature = insertFeatureData[i];
-        for (let j = 0; j < productPrice.length; j += priceInsertLen) {
+        for (let j = 0; j < productPrice.length; j += insertPriceLen) {
           insertPriceData[i][j] = productId;
         }
-        for (let j = 0; j < productFeature.length; j += featureInsertLen) {
+        for (let j = 0; j < productFeature.length; j += insertFeatureLen) {
           insertFeatureData[i][j] = productId;
         }
         productId++;
       }
 
-      promiseArr.push(
-        this.#connection.query(
-          queries.insertPrice + ' ' + readyDataSetPrice,
-          insertPriceData.flat(1)
-        ),
-        this.#connection.query(
-          queries.insertFeatures + ' ' + readyDataSetFeature,
-          insertFeatureData.flat(1)
-        )
+      this.#addQueryInsertData(
+        insertPriceData,
+        queries.insertPrice,
+        promiseArr,
+        insertPriceLen
+      );
+      this.#addQueryInsertData(
+        insertFeatureData,
+        queries.insertFeatures,
+        promiseArr,
+        insertFeatureLen
       );
     }
 
