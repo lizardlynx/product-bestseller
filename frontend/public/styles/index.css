@@ -36,6 +36,8 @@ header {
   border-radius: 4px;
   width: auto;
   position: relative;
+  color: #000;
+  text-transform: none;
 }
 
 .categories > .category {
@@ -88,4 +90,24 @@ header {
 .category:hover > .category-children {
   display: block;
   height: auto;
+}
+
+.breadcrumbs {
+  margin: 20px auto 40px;
+}
+
+.breadcrumbs a {
+  color: #500;
+  text-decoration: none;
+}
+
+.breadcrumbs a:hover {
+  color: #ca0000;
+}
+
+.error-holder.filled {
+  padding: 30px;
+  font-size: 30px;
+  text-align: center;
+  color: #990000;
 }

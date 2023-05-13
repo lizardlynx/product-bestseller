@@ -18,6 +18,31 @@ p {
   padding: 10px;
   text-align: center;
   border-radius: 4px;
+  position: relative;
+}
+
+.shop-name {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+}
+
+.shop-name .shop-logo {
+  height: 80px;
+  background-color: white;
+  width: 90px;
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shop-name img {
+  width: 70px;
+  height: fit-content;
+  border-radius: 50px;
+  margin-left: 3px;
+  margin-left: 10px;
 }
 
 .product:hover {
@@ -29,4 +54,9 @@ p {
   display: block;
   color: gray;
   text-decoration: none;
+}
+
+.oldPrice {
+  text-decoration: line-through;
+  color: gray;
 }

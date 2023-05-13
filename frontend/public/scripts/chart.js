@@ -8,7 +8,7 @@ export function buildChart(
   pointStart,
   series
 ) {
-  document.getElementById(id).style.display = 'block';
+  // document.getElementById(id).style.display = 'block';
   Highcharts.chart(id, {
     title: {
       text,

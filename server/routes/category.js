@@ -24,11 +24,9 @@ const category = (fastify, _, done) => {
   //done
   fastify.get('/categories/:id/products', async function (req, reply) {
     const { id } = req.params;
-    console.log('here', id);
     const products = await databaseService.getProductsByCategory(id);
     reply.type('text/html').send(JSON.stringify(products));
   });
-
   done();
 };
 

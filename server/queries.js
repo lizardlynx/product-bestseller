@@ -29,15 +29,30 @@ module.exports = {
       values `,
   insertFeatures: `insert into features(product_id, shop_id, title, value)
       values `,
-  getProductsByCategory: `select p1.id, p1.category_id, p1.title, p1.image, p1.description, p1.country, p1.weight_g, p1.brand, f.shop_id, f.title as 'feature', f.value from products p1
-        left join features f
-        on p1.id = f.product_id
-        where p1.category_id = ?`,
+  getProductsByCategory: `select * from products where category_id in `,
+  getCategoryHierarchy: `with recursive cte as (
+    select id, parent_category_id, title
+    from categories where id=?
+    union all
+    select c.id, c.parent_category_id, c.title from categories c
+      inner join cte p
+    on p.parent_category_id = c.id
+  )
+  select * from cte order by id asc`,
+  getFeaturesByProducts: `select product_id, shop_id, shop_id, title as 'feature', value from features
+  where product_id in `,
+  getChildCategories: `with recursive cte as (
+    select id, parent_category_id, title
+    from categories where id=?
+    union all
+    select c.id, c.parent_category_id, c.title from categories c
+      inner join cte p
+    on p.id = c.parent_category_id
+  )
+  select * from cte`,
   getPricesOfProducts: `select p1.product_id, p1.shop_id, p1.comment, max(p1.date) as date, p1.price from prices p1
-    left join products p2
-    on p1.product_id = p2.id
-    where p2.category_id = ?
-    group by p1.product_id, p1.shop_id, p1.comment, p1.price`,
+    where p1.comment = 'price' and p1.product_id in `,
+  getPricesOfProductsGroupBy: `group by p1.product_id, p1.shop_id, p1.comment, p1.price order by date`,
   getProduct: 'select * from products where id=?',
   getPricesByProduct: `select shop_id, comment, max(date) as date, price from prices
     where product_id = ?

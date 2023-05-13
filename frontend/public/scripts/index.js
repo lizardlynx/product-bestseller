@@ -1,8 +1,12 @@
-function showChildren(categoryChildren) {
-  if (categoryChildren.childNodes.length == 0) return;
-  const categoryOpened = categoryChildren.classList.contains('category-opened');
-  if (categoryOpened) categoryChildren.classList.remove('category-opened');
-  else categoryChildren.classList.add('category-opened');
+export let dbShopsData = null;
+import { initError } from './common.js';
+
+async function loadShops() {
+  const res = await fetch('/shops', {
+    method: 'GET',
+  });
+  const resJSON = await res.json();
+  dbShopsData = resJSON;
 }
 
 async function getCategoryProducts(id) {
@@ -37,6 +41,8 @@ async function loadShopData(shopName) {
   const res = await fetch('/categories/' + shopName, {
     method: 'POST',
   });
+  if (!res.ok) return initError(await res.text());
+
   const resJSON = await res.json();
   const resultWindow = document.getElementById('result-window');
   resultWindow.innerHTML = `Load${shopName}Data<br>Status Code: ${
@@ -51,6 +57,8 @@ async function loadProducts() {
   const res = await fetch('/products/all', {
     method: 'POST',
   });
+  if (!res.ok) return initError(await res.text());
+
   const resJSON = await res.json();
   console.log(resJSON);
   // const resultWindow = document.getElementById('result-window');
@@ -62,6 +70,8 @@ async function loadCategories() {
   const res = await fetch('/categories', {
     method: 'GET',
   });
+  if (!res.ok) return initError(await res.text());
+  
   const categories = await res.json();
   const categoriesHolder = document.getElementsByClassName('categories')[0];
   categoriesHolder.innerHTML = '';
@@ -105,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('header-holder').innerHTML = `
     <header>
       <div class="wrapper">
-        <h1>Select Category</h1>
+        <div class="categories"></div>
       </div>
       <h2>Emty database and load: </h2>
       <button id="auchan">Only Auchan</button>
@@ -115,7 +125,8 @@ document.addEventListener('DOMContentLoaded', () => {
       <div id="result-window"></div>
     </header>
     <div class="wrapper">
-      <div class="categories"></div>
+      <div class="breadcrumbs"></div>
+      <div class="error-holder"></div>
     </div>
   `;
 
@@ -130,4 +141,5 @@ document.addEventListener('DOMContentLoaded', () => {
     .getElementById('all')
     .addEventListener('click', () => loadShopData('all'));
   document.getElementById('products').addEventListener('click', loadProducts);
+  loadShops();
 });

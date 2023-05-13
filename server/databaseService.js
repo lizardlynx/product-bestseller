@@ -47,20 +47,26 @@ class DatabaseService {
   }
 
   async getProductsByCategory(id) {
-    const [products, prices] = await db.getProductsByCategory(id);
-    const productsFormatted = dataFormatter.formatProducts(products, prices);
-    return productsFormatted;
+    const categories = await db.getChildCategories(id);
+    if (categories == null) return "No such category found";
+    const breadcrumbs = await db.getCategoryHierarchy(id);
+    const categoriesArr = categories.map(cat => cat.id);
+    const [products, prices, features] = await db.getProductsByCategory(categoriesArr);
+    if (products == null) return "There are no products in this category";
+    const productsFormatted = await dataFormatter.formatProducts(products, prices, features);
+    return {products: productsFormatted, breadcrumbs};
   }
 
   async getProductData(id) {
     const [products, prices, features] = await db.getProductData(id);
     if (products.length == 0) return null;
+    const breadcrumbs = await db.getCategoryHierarchy(products[0].category_id);
     const productFormatted = await dataFormatter.formatProductData(
       products,
       prices,
       features
     );
-    return productFormatted;
+    return { product: productFormatted, breadcrumbs };
   }
 
   getShops() {

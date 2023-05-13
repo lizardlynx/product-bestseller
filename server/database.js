@@ -57,19 +57,52 @@ class Database {
     return [rows, rowsAll];
   }
 
-  async getProductsByCategory(id) {
+  async getChildCategories(id) {
     await this.#createConnection();
-    const [products, productsFields] = await this.#connection.query(
-      queries.getProductsByCategory,
-      [id]
-    );
-    const [prices, pricesFields] = await this.#connection.query(
-      queries.getPricesOfProducts,
+    const [categories, productsFields] = await this.#connection.query(
+      queries.getChildCategories,
       [id]
     );
 
     this.#connection.release();
-    return [products, prices];
+    return categories;
+  }
+
+  #createQuestionMarkString(arr) {
+    return '( ' + new Array(arr.length).fill('?').join(',') + ')';
+  }
+
+  async getCategoryHierarchy(id) {
+    await this.#createConnection();
+    const [categories, productsFields] = await this.#connection.query(
+      queries.getCategoryHierarchy,
+      [id]
+    );
+    this.#connection.release();
+    return categories;
+  }
+
+  async getProductsByCategory(id) {
+    await this.#createConnection();
+    const questionMarkString = this.#createQuestionMarkString(id);
+    const [products, productsFields] = await this.#connection.query(
+      queries.getProductsByCategory + questionMarkString + ' limit 0, 20',
+      [...id]
+    );
+    if (products.length == 0) return [null, null, null];
+    const productIds = products.map(product => product.id);
+    const questionMarkStringProducts = this.#createQuestionMarkString(productIds);
+    const [prices, pricesFields] = await this.#connection.query(
+      queries.getPricesOfProducts + questionMarkStringProducts + queries.getPricesOfProductsGroupBy,
+      [...productIds]
+    );
+    const [features, featuresFields] = await this.#connection.query(
+      queries.getFeaturesByProducts + questionMarkStringProducts,
+      [...productIds]
+    );
+
+    this.#connection.release();
+    return [products, prices, features];
   }
 
   async getProductData(id) {

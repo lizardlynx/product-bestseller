@@ -170,26 +170,29 @@ class DataFormatter {
     return product;
   }
 
-  async formatProducts(products, prices) {
+  async formatProducts(products, prices, features) {
     const productsFormatted = {};
     for (const product of products) {
       if (!(product.id in productsFormatted)) {
         productsFormatted[product.id] = product;
         productsFormatted[product.id].features = [];
         productsFormatted[product.id].prices = [];
-        delete productsFormatted[product.id].feature;
-        delete productsFormatted[product.id].value;
-        delete productsFormatted[product.id].shop_id;
+        productsFormatted[product.id].shops = [];
       }
-      productsFormatted[product.id].features.push([
-        product.feature,
-        product.value,
-        product.shop_id,
-      ]);
+      // productsFormatted[product.id].features.push([
+      //   product.feature,
+      //   product.value,
+      //   product.shop_id,
+      // ]);
     }
 
     for (const price of prices) {
       productsFormatted[price.product_id].prices.push(price);
+    }
+
+    for (const feature of features) {
+      productsFormatted[feature.product_id].features.push(feature);
+      if (!productsFormatted[feature.product_id].shops.includes(feature.shop_id))  productsFormatted[feature.product_id].shops.push(feature.shop_id);
     }
     return productsFormatted;
   }

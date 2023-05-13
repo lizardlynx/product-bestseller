@@ -1,3 +1,6 @@
+import { dbShopsData } from './index.js';
+import { initError, insertBreadcrumbs } from './common.js';
+
 function createProductHTML(product) {
   const productDiv = document.createElement('div');
   productDiv.classList.add('product');
@@ -5,10 +8,17 @@ function createProductHTML(product) {
   productDiv.innerHTML = `<img src="${product.image}" width="200px" alt="${product.title}">
   <a class="title" href="/products/${product.id}">${product.title}</a>`;
   for (const price of product.prices) {
-    productDiv.innerHTML += `<div class="price-description">${price.comment}</div><div class="price">${price.price}</div>`;
+    if (price.comment != 'price' && price.comment != 'oldPrice') continue; 
+    productDiv.innerHTML += `<div class="price ${price.comment}">${price.price}</div>`;
   }
 
-  // <div class="price-description">${product.comment}</div><div class="price">${product.price}</div>`;
+  let shopHTML = '';
+  shopHTML += '<div class="shop-name">';
+  for (const shop of product.shops) {
+    shopHTML += `<div class="shop-logo"><img src="/images/${dbShopsData[shop].title}.png"></div>`;
+  }
+  shopHTML += '</div>';
+  productDiv.innerHTML += shopHTML;
   return productDiv;
 }
 
@@ -19,11 +29,16 @@ async function loadProducts(categoryId) {
   const res = await fetch(apiUrl, {
     method: 'GET',
   });
+  if (!res.ok) return initError(await res.text());
+  
   const resJSON = await res.json();
-  for (let product of Object.values(resJSON)) {
+  const products = resJSON.products;
+  for (let product of Object.values(products)) {
     const productDiv = createProductHTML(product);
     productHolder.appendChild(productDiv);
   }
+  const breadcrumbs = resJSON.breadcrumbs;
+  insertBreadcrumbs(breadcrumbs);
 }
 
 document.addEventListener('DOMContentLoaded', () => {

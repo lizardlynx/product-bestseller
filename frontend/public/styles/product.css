@@ -10,6 +10,7 @@
   flex: 2;
   max-width: 400px;
   width: auto;
+  height: fit-content;
 }
 .product div.block2 {
   flex: 3;
@@ -17,11 +18,15 @@
   width: auto;
 }
 
-.shop-comparer {
+.price-text {
+  margin-left: 20px;
+}
+
+/* .shop-comparer {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-}
+} */
 
 .product .feature {
   display: flex;
@@ -40,14 +45,21 @@
 .product .shop-name {
   font-size: 28px;
   font-weight: 700;
-  color: #ea8b13;
+  color: #990000;
   margin: 7px;
+  text-decoration: none;
+  margin-left: 0;
+}
+
+.shop-name.Silpo {
+  margin-right: 45px;
 }
 
 .product .price-holder {
   display: flex;
   flex-direction: row;
   line-height: 50px;
+  align-items: center;
 }
 
 .product .old-price {
@@ -71,5 +83,51 @@
 
 .chart-holder {
   margin-top: 50px;
+}
+
+.shop-comparer .shop-title {
+  color: #4c4553;
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  margin-top: 30px;
+}
+
+.shop-comparer .shop {
+  max-width: 500px;
+}
+
+.chart-buttons {
+  margin: 40px 0;
+}
+
+.chart-buttons .chart-opener-button {
+  margin-right: 20px;
+}
+
+.chart-opener-button {
+  padding: 10px;
+  font-size: 15px;
+  font-weight: 400;
+  background-color: #eaf2ff;
+  border: 2px solid #500;
+  border-radius: 4px;
+}
+
+.chart-opener-button:hover {
+  color: #990000;
+  cursor: pointer;
+}
+
+.chart-holder.hidden {
   display: none;
+}
+
+.chart-opener-button.clicked {
+  background-color: gray;
+}
+
+.block2 .naming {
+  color: gray;
+  margin-right: 20px;
 }
