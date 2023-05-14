@@ -8,7 +8,8 @@ const {
   resolveFeatureName,
   resolveFeatureValue,
   splitCategories,
-} = require('../common.js');
+  cleanArray,
+} = require('./common.js');
 
 class DataFormatter {
   #connection = null;
@@ -192,7 +193,10 @@ class DataFormatter {
 
     for (const feature of features) {
       productsFormatted[feature.product_id].features.push(feature);
-      if (!productsFormatted[feature.product_id].shops.includes(feature.shop_id))  productsFormatted[feature.product_id].shops.push(feature.shop_id);
+      if (
+        !productsFormatted[feature.product_id].shops.includes(feature.shop_id)
+      )
+        productsFormatted[feature.product_id].shops.push(feature.shop_id);
     }
     return productsFormatted;
   }
@@ -201,6 +205,9 @@ class DataFormatter {
     const shopId = this.#shopConfig.auchan.dbId;
     this.#insertShop = shopId;
     for (let product of products.search.products) {
+      if (this.#productIds.includes(product.id)) {
+        continue;
+      }
       let country = null;
       let brand = null;
       let weight = null;
@@ -211,7 +218,7 @@ class DataFormatter {
         priceData.push(null, shopId, datetime(), oldPrice, 'price');
       else {
         priceData.push(null, shopId, datetime(), currPrice, 'price');
-        priceData.push(null, shopId, datetime(), currPrice, 'price');
+        priceData.push(null, shopId, datetime(), oldPrice, 'oldPrice');
       }
 
       this.#insertPriceData.push(priceData);
@@ -235,9 +242,6 @@ class DataFormatter {
         else if (attribute.code == 'brand') brand = attribute.value;
         else if (attribute.code == 'weight2') weight = attribute.value;
         else featureData.push(null, shopId, attribute.label, attribute.value);
-      }
-      if (resolveBrand(brand) == 'dolcasan') {
-        console.log('here');
       }
       this.#insertFeatureData.push(featureData);
       if (!weight) {
@@ -273,6 +277,9 @@ class DataFormatter {
     const shopId = this.#shopConfig.silpo.dbId;
     this.#insertShop = shopId;
     for (let product of products.data.items) {
+      if (this.#productIds.includes(product.id)) {
+        continue;
+      }
       let country = null;
       let brand = null;
       let weight = product.unit;
@@ -315,15 +322,15 @@ class DataFormatter {
       const category = product.categories[product.categories.length - 1];
       const categoryId = category.id;
       const categoryName = category.name;
-      const dbCategoryId = this.#categoriesObj[shopId][categoryId];
+      let dbCategoryId = this.#categoriesObj[shopId][categoryId];
 
-      if (!dbCategoryId) {
+      if (categoryName && !dbCategoryId) {
         this.#categoriesToInsert[this.#insertProductData.length] = {
           id: categoryId,
           name: categoryName,
           parentId: dbId,
         };
-      }
+      } else if (!categoryName) dbCategoryId = dbId;
 
       this.#insertFeatureData.push(featureData);
       this.#insertProductData.push([
@@ -353,7 +360,7 @@ class DataFormatter {
       const priceUpdate = this.#insertPriceData[i].slice();
       this.#insertPriceData[i] = null;
       if (id.update_needed) {
-        for (let j = 0; i < priceUpdate.length; j += priceInsertLen) {
+        for (let j = 0; j < priceUpdate.length; j += priceInsertLen) {
           const chunk = priceUpdate.slice(j, j + priceInsertLen);
           chunk[0] = dbId;
           pricesUpdate.push(chunk);
@@ -367,9 +374,14 @@ class DataFormatter {
       }
     }
 
-    this.#insertProductData = this.#insertProductData.filter((e) => e !== null);
-    this.#insertFeatureData = this.#insertFeatureData.filter((e) => e !== null);
-    this.#insertPriceData = this.#insertPriceData.filter((e) => e !== null);
+    // console.log(this.#insertProductData);
+    cleanArray(this.#insertProductData);
+    cleanArray(this.#insertFeatureData);
+    cleanArray(this.#insertPriceData);
+    // console.log(this.#insertProductData);
+    // this.#insertProductData = this.#insertProductData.filter((e) => e !== null);
+    // this.#insertFeatureData = this.#insertFeatureData.filter((e) => e !== null);
+    // this.#insertPriceData = this.#insertPriceData.filter((e) => e !== null);
     return { prices: pricesUpdate, features: featuresUpdate };
   }
 

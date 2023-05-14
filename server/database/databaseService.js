@@ -48,12 +48,25 @@ class DatabaseService {
 
   async getProductsByCategory(id, pageNumber, itemsOnPage) {
     const categories = await db.getChildCategories(id);
-    if (categories.length == 0) return {error: "No such category found", code: 404};
+    if (categories.length == 0)
+      return { error: 'No such category found', code: 404 };
     const breadcrumbs = await db.getCategoryHierarchy(id);
-    const categoriesArr = categories.map(cat => cat.id);
-    const [products, prices, features, count] = await db.getProductsByCategory(categoriesArr, +(pageNumber), +(itemsOnPage));
-    const productsFormatted = await dataFormatter.formatProducts(products, prices, features);
-    return {products: productsFormatted, breadcrumbs, count: Math.ceil(count[0].count/itemsOnPage)};
+    const categoriesArr = categories.map((cat) => cat.id);
+    const [products, prices, features, count] = await db.getProductsByCategory(
+      categoriesArr,
+      +pageNumber,
+      +itemsOnPage
+    );
+    const productsFormatted = await dataFormatter.formatProducts(
+      products,
+      prices,
+      features
+    );
+    return {
+      products: productsFormatted,
+      breadcrumbs,
+      count: Math.ceil(count[0].count / itemsOnPage),
+    };
   }
 
   async getProductData(id) {
@@ -143,10 +156,18 @@ class DatabaseService {
 
     const oldIds = await db.checkExistingIds(productIds, insertShop);
     const pricesUpdate1 = dataFormatter.pickUpdates(oldIds).prices;
-    let updatedInsertData = dataFormatter.getInsertProductsData();
-    insertPriceData = updatedInsertData.insertPriceData;
-    insertFeatureData = updatedInsertData.insertFeatureData;
-    insertProductData = updatedInsertData.insertProductData;
+
+    // let updatedInsertData = dataFormatter.getInsertProductsData();
+    // insertPriceData = updatedInsertData.insertPriceData.filter(
+    //   (e) => e !== null
+    // );
+    // insertFeatureData = updatedInsertData.insertFeatureData.filter(
+    //   (e) => e !== null
+    // );
+    // insertProductData = updatedInsertData.insertProductData.filter(
+    //   (e) => e !== null
+    // );
+    // console.log(insertProductData);
     const { prices: pricesUpdate2, features: featuresUpdate } =
       await this.#checkProductsForSimilarity(
         insertProductData,

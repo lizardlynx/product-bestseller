@@ -70,10 +70,10 @@ module.exports = {
     'select shop_id, date, price, comment from prices where product_id = ?',
   getBrands: 'select * from brands',
   getCountry: 'select * from countries where title in ',
-  checkExistingProductIds: `select f.value id, f.product_id, max(r.date) < now() - INTERVAL 1 DAY update_needed from features f
+  checkExistingProductIds: `select f.value id, f.product_id, DATE(max(r.date)) <> CURDATE() update_needed from features f
   inner join prices r
   on f.product_id = r.product_id
-   where f.shop_id=? and f.title='id' and f.value in `,
+   where f.shop_id=?  and r.shop_id=f.shop_id and f.title='id' and f.value in `,
   checkExistingProductIdsGroupBy: ' group by f.value, f.product_id',
   selectSimilarProducts: `select distinct p.* from products p
   inner join features f

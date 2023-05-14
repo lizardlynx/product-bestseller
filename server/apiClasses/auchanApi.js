@@ -50,8 +50,9 @@ class AuchanApi extends BaseApi {
     );
     if (res.error) return res;
     await delay(3000);
-    this.#getProductByCategoryTotalPages =
-      res.data.search.page_info.total_pages;
+    if (res.data.search)
+      this.#getProductByCategoryTotalPages =
+        res.data.search.page_info.total_pages;
     this.#getProductByCategoryVariables.currentPage++;
     if (
       this.#getProductByCategoryVariables.currentPage >

@@ -41,14 +41,6 @@ const load = (fastify, _, done) => {
   fastify.post('/products/all', async function (req, reply) {
     const shopIds = await databaseService.getCategoriesIds();
 
-    // const idsAuchan = [];
-    // const idsSilpo = [];
-    // for (const sId of shopIds.data) {
-    //   if (sId.db_id == 1) continue;
-    //   if (sId.shop_id == 1) idsAuchan.push([sId.shop_category_id, sId.db_id]);
-    //   else idsSilpo.push([sId.shop_category_id, sId.db_id]);
-    // }
-
     const { idsSilpo, idsAuchan } = shopIds.reduce(
       (acc, shopData) => {
         if (!shopData.db_id == 1) return acc;
@@ -60,15 +52,20 @@ const load = (fastify, _, done) => {
     );
 
     // need to load in chunks
+    console.log(idsAuchan);
     let data = {};
     for (const ids of idsAuchan) {
       data = {};
       console.log(ids);
       const [initialId, dbId] = ids; //[5346, 12];//ids;
-      if (initialId == 5335) continue;
+      // if (initialId != 5346) continue;
       while (!('finished' in data)) {
         data = await auchanApi.loadProductsByCategory([initialId]);
         if (data.error) return processError(data.error, reply);
+        if (!data.data.search) {
+          console.log('here search was null');
+          continue;
+        }
         databaseService.addAuchanProductsToQuery(data.data, dbId);
       }
       await databaseService.insertProductsData();
