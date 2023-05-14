@@ -30,7 +30,7 @@ const build = (opts = {}) => {
 
   app.setErrorHandler(function (error, request, reply) {
     this.log.error(error);
-    reply.status(500).send({ error: 'Internal Server Error' });
+    reply.status(500).send('Internal Server Error');
   });
 
   app.get('/', (req, reply) => {

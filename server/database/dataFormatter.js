@@ -8,7 +8,7 @@ const {
   resolveFeatureName,
   resolveFeatureValue,
   splitCategories,
-} = require('./common.js');
+} = require('../common.js');
 
 class DataFormatter {
   #connection = null;

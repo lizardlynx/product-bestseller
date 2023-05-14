@@ -1,7 +1,7 @@
 'use strict';
 const fs = require('fs');
 const { logChunks } = require('../common.js');
-const databaseService = require('../databaseService.js');
+const databaseService = require('../database/databaseService.js');
 const path = require('path');
 
 const product = (fastify, _, done) => {

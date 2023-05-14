@@ -8,6 +8,7 @@ body {
   background-color: #e6e6e6;
   color: #000;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  padding-bottom: 100px;
 }
 
 .wrapper {
@@ -93,7 +94,7 @@ header {
 }
 
 .breadcrumbs {
-  margin: 20px auto 40px;
+  margin: 40px auto;
 }
 
 .breadcrumbs a {

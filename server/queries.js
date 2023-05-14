@@ -29,7 +29,14 @@ module.exports = {
       values `,
   insertFeatures: `insert into features(product_id, shop_id, title, value)
       values `,
-  getProductsByCategory: `select * from products where category_id in `,
+  getProductsByCategory: `select p.id, p.category_id, p.title, p.description, p.image, p.country, p.weight_g, p.brand, count(f.shop_id) count from products p 
+  left join features f
+  on p.id = f.product_id
+  where p.category_id in `,
+  getProductsByCategoryGroupBy: `and f.title = 'id'
+  group by p.id, p.category_id, p.title, p.description, p.image, p.country, p.weight_g, p.brand
+  order by count desc`,
+  countProductsByCategory: `select count(*) count from products where category_id in `,
   getCategoryHierarchy: `with recursive cte as (
     select id, parent_category_id, title
     from categories where id=?

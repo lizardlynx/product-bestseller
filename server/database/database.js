@@ -1,6 +1,6 @@
 'use strict';
-const queries = require('./queries.js');
-const { splitCategories } = require('./common.js');
+const queries = require('../queries.js');
+const { splitCategories } = require('../common.js');
 
 class Database {
   #connection;
@@ -82,14 +82,19 @@ class Database {
     return categories;
   }
 
-  async getProductsByCategory(id) {
-    await this.#createConnection();
+  async getProductsByCategory(id, pageNumber, itemsOnPage) {
+    await this.#createConnection(); 
+    const offset = itemsOnPage*(pageNumber - 1);
     const questionMarkString = this.#createQuestionMarkString(id);
-    const [products, productsFields] = await this.#connection.query(
-      queries.getProductsByCategory + questionMarkString + ' limit 0, 20',
+    const [productCount, productCountField] = await this.#connection.query(
+      queries.countProductsByCategory + questionMarkString,
       [...id]
     );
-    if (products.length == 0) return [null, null, null];
+    const [products, productsFields] = await this.#connection.query(
+      queries.getProductsByCategory + questionMarkString + queries.getProductsByCategoryGroupBy + ' limit ' +  itemsOnPage + ' offset ' + offset,
+      [...id]
+    );
+    if (products.length == 0) return [[], [], [], productCount];
     const productIds = products.map(product => product.id);
     const questionMarkStringProducts = this.#createQuestionMarkString(productIds);
     const [prices, pricesFields] = await this.#connection.query(
@@ -102,7 +107,7 @@ class Database {
     );
 
     this.#connection.release();
-    return [products, prices, features];
+    return [products, prices, features, productCount];
   }
 
   async getProductData(id) {

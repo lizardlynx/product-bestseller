@@ -46,15 +46,14 @@ class DatabaseService {
     return rows;
   }
 
-  async getProductsByCategory(id) {
+  async getProductsByCategory(id, pageNumber, itemsOnPage) {
     const categories = await db.getChildCategories(id);
-    if (categories == null) return "No such category found";
+    if (categories.length == 0) return {error: "No such category found", code: 404};
     const breadcrumbs = await db.getCategoryHierarchy(id);
     const categoriesArr = categories.map(cat => cat.id);
-    const [products, prices, features] = await db.getProductsByCategory(categoriesArr);
-    if (products == null) return "There are no products in this category";
+    const [products, prices, features, count] = await db.getProductsByCategory(categoriesArr, +(pageNumber), +(itemsOnPage));
     const productsFormatted = await dataFormatter.formatProducts(products, prices, features);
-    return {products: productsFormatted, breadcrumbs};
+    return {products: productsFormatted, breadcrumbs, count: Math.ceil(count[0].count/itemsOnPage)};
   }
 
   async getProductData(id) {

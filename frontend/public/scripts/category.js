@@ -1,5 +1,5 @@
 import { dbShopsData } from './index.js';
-import { initError, insertBreadcrumbs } from './common.js';
+import { initError, insertBreadcrumbs, getJsonFromUrl, createPagination } from './common.js';
 
 function createProductHTML(product) {
   const productDiv = document.createElement('div');
@@ -22,10 +22,13 @@ function createProductHTML(product) {
   return productDiv;
 }
 
-async function loadProducts(categoryId) {
+async function loadProducts(categoryId, pageNumber) {
   const productHolder = document.getElementsByClassName('products')[0];
 
-  const apiUrl = '/categories/' + categoryId + '/products';
+  const apiUrl = '/categories/' + categoryId + '/products?' + new URLSearchParams({
+    page: pageNumber,
+    items: 20,
+  });
   const res = await fetch(apiUrl, {
     method: 'GET',
   });
@@ -39,11 +42,17 @@ async function loadProducts(categoryId) {
   }
   const breadcrumbs = resJSON.breadcrumbs;
   insertBreadcrumbs(breadcrumbs);
+  const pages = document.getElementsByClassName('pages')[0];
+  const pageCount = resJSON.count;
+  createPagination(pageCount, pages, pageNumber, `/categories/${categoryId}`);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   const pathname = new URL(location).pathname;
   const categoryId = pathname.split('/')[2];
+  const queries = getJsonFromUrl(location.search);
+  let pageNumber = 1;
+  if ('pageNumber' in queries) pageNumber = queries.pageNumber;
 
-  loadProducts(categoryId);
+  loadProducts(categoryId, +(pageNumber));
 });

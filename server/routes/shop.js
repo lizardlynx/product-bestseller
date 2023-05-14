@@ -1,5 +1,5 @@
 'use strict';
-const databaseService = require('../databaseService.js');
+const databaseService = require('../database/databaseService.js');
 
 const shop = (fastify, _, done) => {
   //

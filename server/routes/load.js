@@ -1,7 +1,7 @@
 'use strict';
 const auchanApi = require('../apiClasses/auchanApi.js');
 const silpoApi = require('../apiClasses/silpoApi.js');
-const databaseService = require('../databaseService.js');
+const databaseService = require('../database/databaseService.js');
 const { processError } = require('../common.js');
 
 const load = (fastify, _, done) => {
