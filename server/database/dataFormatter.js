@@ -9,7 +9,7 @@ const {
   resolveFeatureValue,
   splitCategories,
   cleanArray,
-} = require('./common.js');
+} = require('../common.js');
 
 class DataFormatter {
   #connection = null;
@@ -94,20 +94,6 @@ class DataFormatter {
     return [currentCategories, shopId, this.#categoriesAddedTemp];
   }
 
-  async getCategoryIds(id) {
-    this.#connection = await fastify.mysql.getConnection();
-    const [rows, fields] = await this.#connection.query(
-      queries.getCategoryIds,
-      [id]
-    );
-    this.#connection.release();
-    return {
-      success: 1,
-      message: 'Categories processed successfully.',
-      data: rows,
-    };
-  }
-
   formatPricesData(rows) {
     const pricesFormatted = {};
     for (const row of rows) {
@@ -180,11 +166,6 @@ class DataFormatter {
         productsFormatted[product.id].prices = [];
         productsFormatted[product.id].shops = [];
       }
-      // productsFormatted[product.id].features.push([
-      //   product.feature,
-      //   product.value,
-      //   product.shop_id,
-      // ]);
     }
 
     for (const price of prices) {
@@ -374,14 +355,9 @@ class DataFormatter {
       }
     }
 
-    // console.log(this.#insertProductData);
     cleanArray(this.#insertProductData);
     cleanArray(this.#insertFeatureData);
     cleanArray(this.#insertPriceData);
-    // console.log(this.#insertProductData);
-    // this.#insertProductData = this.#insertProductData.filter((e) => e !== null);
-    // this.#insertFeatureData = this.#insertFeatureData.filter((e) => e !== null);
-    // this.#insertPriceData = this.#insertPriceData.filter((e) => e !== null);
     return { prices: pricesUpdate, features: featuresUpdate };
   }
 

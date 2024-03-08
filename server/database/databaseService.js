@@ -157,17 +157,6 @@ class DatabaseService {
     const oldIds = await db.checkExistingIds(productIds, insertShop);
     const pricesUpdate1 = dataFormatter.pickUpdates(oldIds).prices;
 
-    // let updatedInsertData = dataFormatter.getInsertProductsData();
-    // insertPriceData = updatedInsertData.insertPriceData.filter(
-    //   (e) => e !== null
-    // );
-    // insertFeatureData = updatedInsertData.insertFeatureData.filter(
-    //   (e) => e !== null
-    // );
-    // insertProductData = updatedInsertData.insertProductData.filter(
-    //   (e) => e !== null
-    // );
-    // console.log(insertProductData);
     const { prices: pricesUpdate2, features: featuresUpdate } =
       await this.#checkProductsForSimilarity(
         insertProductData,
@@ -183,6 +172,10 @@ class DatabaseService {
       insertFeatureData,
     });
     dataFormatter.cleanInsertProductData();
+  }
+
+  async getProductsByName(name) {
+    return await db.getProductsByName(name);
   }
 }
 

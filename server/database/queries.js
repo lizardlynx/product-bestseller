@@ -15,8 +15,6 @@ module.exports = {
       left join categories b
       on b.id = a.parent_category_id
       order by a.title asc`,
-  getCategoryIds: `select shop_category_id, shop_id from shop_categories_match
-      where db_id=?`,
   getCategoriesIds: `select m.shop_category_id, m.shop_id, m.db_id from categories c
   inner join shop_categories_match m
   on c.id=m.db_id
@@ -35,7 +33,13 @@ module.exports = {
   where p.category_id in `,
   getProductsByCategoryGroupBy: `and f.title = 'id'
   group by p.id, p.category_id, p.title, p.description, p.image, p.country, p.weight_g, p.brand
-  order by count desc`,
+  order by count desc, p.title asc `,
+  getProductsByName: `select p.id, p.title, count(f.shop_id) count from products p 
+  left join features f
+  on p.id = f.product_id
+  where p.title like ? and f.title = 'id'
+  group by p.id, p.title
+  order by count desc, p.title asc limit 20 offset 0`,
   countProductsByCategory: `select count(*) count from products where category_id in `,
   getCategoryHierarchy: `with recursive cte as (
     select id, parent_category_id, title

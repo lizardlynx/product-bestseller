@@ -1,4 +1,5 @@
 export let dbShopsData = null;
+let interval = null;
 import { initError } from './common.js';
 
 async function loadShops() {
@@ -71,7 +72,7 @@ async function loadCategories() {
     method: 'GET',
   });
   if (!res.ok) return initError(await res.text());
-  
+
   const categories = await res.json();
   const categoriesHolder = document.getElementsByClassName('categories')[0];
   categoriesHolder.innerHTML = '';
@@ -111,13 +112,43 @@ async function loadCategories() {
   }
 }
 
+function addSearchItem(item) {
+  const searchResults = document.getElementById('search-results');
+  const itemA = document.createElement('a');
+  itemA.classList.add('product-result');
+  itemA.setAttribute('href', '/products/' + item.id);
+  itemA.innerText = item.title;
+  searchResults.appendChild(itemA);
+}
+
+function searchProduct(e) {
+  clearInterval(interval);
+  interval = setTimeout(async () => {
+    const res = await fetch(
+      '/products?' + new URLSearchParams({ name: e.target.value }),
+      {
+        method: 'GET',
+      }
+    );
+    if (!res.ok) return initError(await res.text());
+
+    const resJSON = await res.json();
+    document.getElementById('search-results').innerHTML = '';
+    resJSON.forEach(addSearchItem);
+  }, 1000);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('header-holder').innerHTML = `
     <header>
       <div class="wrapper">
         <div class="categories"></div>
+        <div class="search-field">
+          <input type="text" id="product-search" placeholder="Search for product.." title="Type in a product">
+          <div id="search-results"></div>
+        </div>
       </div>
-      <h2>Emty database and load: </h2>
+      <h2>Empty database and load: </h2>
       <button id="auchan">Only Auchan</button>
       <button id="silpo">Only Silpo</button>
       <button id="all">All</button>
@@ -131,15 +162,18 @@ document.addEventListener('DOMContentLoaded', () => {
   `;
 
   loadCategories();
-  // document
-  //   .getElementById('auchan')
-  //   .addEventListener('click', () => loadShopData('auchan'));
-  // document
-  //   .getElementById('silpo')
-  //   .addEventListener('click', () => loadShopData('silpo'));
+  document
+    .getElementById('auchan')
+    .addEventListener('click', () => loadShopData('auchan'));
+  document
+    .getElementById('silpo')
+    .addEventListener('click', () => loadShopData('silpo'));
   document
     .getElementById('all')
     .addEventListener('click', () => loadShopData('all'));
   document.getElementById('products').addEventListener('click', loadProducts);
+  document
+    .getElementById('product-search')
+    .addEventListener('keyup', searchProduct);
   loadShops();
 });

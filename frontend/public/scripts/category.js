@@ -1,5 +1,10 @@
 import { dbShopsData } from './index.js';
-import { initError, insertBreadcrumbs, getJsonFromUrl, createPagination } from './common.js';
+import {
+  initError,
+  insertBreadcrumbs,
+  getJsonFromUrl,
+  createPagination,
+} from './common.js';
 
 function createProductHTML(product) {
   const productDiv = document.createElement('div');
@@ -8,7 +13,7 @@ function createProductHTML(product) {
   productDiv.innerHTML = `<img src="${product.image}" width="200px" alt="${product.title}">
   <a class="title" href="/products/${product.id}">${product.title}</a>`;
   for (const price of product.prices) {
-    if (price.comment != 'price' && price.comment != 'oldPrice') continue; 
+    if (price.comment != 'price' && price.comment != 'oldPrice') continue;
     productDiv.innerHTML += `<div class="price ${price.comment}">${price.price}</div>`;
   }
 
@@ -25,15 +30,19 @@ function createProductHTML(product) {
 async function loadProducts(categoryId, pageNumber) {
   const productHolder = document.getElementsByClassName('products')[0];
 
-  const apiUrl = '/categories/' + categoryId + '/products?' + new URLSearchParams({
-    page: pageNumber,
-    items: 20,
-  });
+  const apiUrl =
+    '/categories/' +
+    categoryId +
+    '/products?' +
+    new URLSearchParams({
+      page: pageNumber,
+      items: 20,
+    });
   const res = await fetch(apiUrl, {
     method: 'GET',
   });
   if (!res.ok) return initError(await res.text());
-  
+
   const resJSON = await res.json();
   const products = resJSON.products;
   for (let product of Object.values(products)) {
@@ -54,5 +63,5 @@ document.addEventListener('DOMContentLoaded', () => {
   let pageNumber = 1;
   if ('pageNumber' in queries) pageNumber = queries.pageNumber;
 
-  loadProducts(categoryId, +(pageNumber));
+  loadProducts(categoryId, +pageNumber);
 });

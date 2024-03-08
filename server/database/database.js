@@ -1,5 +1,5 @@
 'use strict';
-const queries = require('../queries.js');
+const queries = require('./queries.js');
 const { splitCategories } = require('../common.js');
 
 class Database {
@@ -83,22 +83,40 @@ class Database {
   }
 
   async getProductsByCategory(id, pageNumber, itemsOnPage) {
-    await this.#createConnection(); 
-    const offset = itemsOnPage*(pageNumber - 1);
+    await this.#createConnection();
+    const offset = itemsOnPage * (pageNumber - 1);
     const questionMarkString = this.#createQuestionMarkString(id);
     const [productCount, productCountField] = await this.#connection.query(
       queries.countProductsByCategory + questionMarkString,
       [...id]
     );
     const [products, productsFields] = await this.#connection.query(
-      queries.getProductsByCategory + questionMarkString + queries.getProductsByCategoryGroupBy + ' limit ' +  itemsOnPage + ' offset ' + offset,
+      queries.getProductsByCategory +
+        questionMarkString +
+        queries.getProductsByCategoryGroupBy +
+        ' limit ' +
+        itemsOnPage +
+        ' offset ' +
+        offset,
       [...id]
     );
+    console.log(
+      queries.getProductsByCategory +
+        questionMarkString +
+        queries.getProductsByCategoryGroupBy +
+        ' limit ' +
+        itemsOnPage +
+        ' offset ' +
+        offset
+    );
     if (products.length == 0) return [[], [], [], productCount];
-    const productIds = products.map(product => product.id);
-    const questionMarkStringProducts = this.#createQuestionMarkString(productIds);
+    const productIds = products.map((product) => product.id);
+    const questionMarkStringProducts =
+      this.#createQuestionMarkString(productIds);
     const [prices, pricesFields] = await this.#connection.query(
-      queries.getPricesOfProducts + questionMarkStringProducts + queries.getPricesOfProductsGroupBy,
+      queries.getPricesOfProducts +
+        questionMarkStringProducts +
+        queries.getPricesOfProductsGroupBy,
       [...productIds]
     );
     const [features, featuresFields] = await this.#connection.query(
@@ -294,6 +312,17 @@ class Database {
 
     await Promise.all(promiseArr);
     this.#connection.release();
+  }
+
+  async getProductsByName(name) {
+    this.#createConnection();
+    const [data, filed] = await this.#connection.query(
+      queries.getProductsByName,
+      ['%' + name + '%']
+    );
+    console.log(data);
+    this.#connection.release();
+    return data;
   }
 }
 

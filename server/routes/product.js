@@ -27,6 +27,12 @@ const product = (fastify, _, done) => {
     reply.type('text/html').send(JSON.stringify(prices));
   });
 
+  fastify.get('/products', async function (req, reply) {
+    const { name } = req.query;
+    const products = await databaseService.getProductsByName(name);
+    reply.type('text/html').send(JSON.stringify(products));
+  });
+
   done();
 };
 

@@ -23,21 +23,37 @@ const load = (fastify, _, done) => {
     reply.status(204).send();
   });
 
-  //done
   fastify.post('/categories/all', async function (req, reply) {
     await databaseService.recreateDatabase();
+
+    let startTime = Date.now();
     const silpoRes = await silpoApi.loadCategories();
     if (silpoRes.error) return processError(silpoRes.error, reply);
+    let endTime = Date.now();
+    console.log(`Execution time SilpoApi: ${endTime - startTime} ms`);
 
+    startTime = Date.now();
     const auchanRes = await auchanApi.loadCategories();
     if (auchanRes.error) return processError(auchanRes.error, reply);
+    endTime = Date.now();
+    console.log(`Execution time AuchanApi: ${endTime - startTime} ms`);
 
+    startTime = Date.now();
     await databaseService.addCategories(silpoRes.data, 'silpo');
+    endTime = Date.now();
+    console.log(
+      `Execution time add categories Silpo: ${endTime - startTime} ms`
+    );
+
+    startTime = Date.now();
     await databaseService.addCategories(auchanRes.data, 'auchan');
+    endTime = Date.now();
+    console.log(
+      `Execution time add categories Auchan: ${endTime - startTime} ms`
+    );
     reply.status(204).send();
   });
 
-  //
   fastify.post('/products/all', async function (req, reply) {
     const shopIds = await databaseService.getCategoriesIds();
 
@@ -54,6 +70,7 @@ const load = (fastify, _, done) => {
     // need to load in chunks
     console.log(idsAuchan);
     let data = {};
+    let startA = Date.now();
     for (const ids of idsAuchan) {
       data = {};
       console.log(ids);
@@ -69,10 +86,14 @@ const load = (fastify, _, done) => {
         databaseService.addAuchanProductsToQuery(data.data, dbId);
       }
       await databaseService.insertProductsData();
-      // break;
     }
+    let endA = Date.now();
+    console.log(
+      `Execution time full download products Auchan: ${endA - startA} ms`
+    );
 
     console.log(idsSilpo);
+    startA = Date.now();
     for (const ids of idsSilpo) {
       data = {};
       const [initialId, dbId] = ids;
@@ -83,8 +104,11 @@ const load = (fastify, _, done) => {
       }
       await databaseService.insertProductsData();
     }
+    endA = Date.now();
+    console.log(
+      `Execution time full download products Silpo: ${endA - startA} ms`
+    );
 
-    // do something with res
     reply.status(204).send();
   });
 
