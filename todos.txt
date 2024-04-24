@@ -4,12 +4,12 @@
 + lookup decorators, may be some help for functions in api classes
 + decide what to do with process request
 - metatitle, metakeyword, metadescription auchan for product
-- format restApi responses
++ format restApi responses
 - parallellism when load both?
 - pipe
 - slugs
-- add limit to mysql queries
++ add limit to mysql queries
 
 
-- handle rest api status codes not ok (like in product.js file)
-- check if chart compare prices works and fix data, transfered to it
++ handle rest api status codes not ok (like in product.js file)
++ check if chart compare prices works and fix data, transfered to it

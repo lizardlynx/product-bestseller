@@ -123,9 +123,10 @@ function addSearchItem(item) {
 
 function searchProduct(e) {
   clearInterval(interval);
+  if (e.target.value.trim().length == 0) return hideSearchResults();
   interval = setTimeout(async () => {
     const res = await fetch(
-      '/products?' + new URLSearchParams({ name: e.target.value }),
+      '/products?' + new URLSearchParams({ name: e.target.value.trim() }),
       {
         method: 'GET',
       }
@@ -134,8 +135,17 @@ function searchProduct(e) {
 
     const resJSON = await res.json();
     document.getElementById('search-results').innerHTML = '';
+    showSearchResults();
     resJSON.forEach(addSearchItem);
   }, 1000);
+}
+
+function hideSearchResults(e) {
+  document.getElementById('search-results').classList.add('hidden');
+}
+
+function showSearchResults(e) {
+  if (!e || e.target.value.trim().length != 0)  document.getElementById('search-results').classList.remove('hidden');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -172,8 +182,15 @@ document.addEventListener('DOMContentLoaded', () => {
     .getElementById('all')
     .addEventListener('click', () => loadShopData('all'));
   document.getElementById('products').addEventListener('click', loadProducts);
-  document
-    .getElementById('product-search')
-    .addEventListener('keyup', searchProduct);
+
+  const productSearch = document.getElementById('product-search');
+  productSearch.addEventListener('keyup', searchProduct);
+  productSearch.addEventListener('focusout', hideSearchResults);
+  productSearch.addEventListener('focusin', showSearchResults);
+  
+  const searchRes = document.getElementById('search-results');
+  searchRes.addEventListener('mouseenter', () => productSearch.removeEventListener('focusout', hideSearchResults));
+  searchRes.addEventListener('mouseleave', () => productSearch.addEventListener('focusout', hideSearchResults));
+
   loadShops();
 });

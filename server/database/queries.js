@@ -39,7 +39,7 @@ module.exports = {
   on p.id = f.product_id
   where p.title like ? and f.title = 'id'
   group by p.id, p.title
-  order by count desc, p.title asc limit 20 offset 0`,
+  order by count desc, p.title asc limit 10 offset 0`,
   countProductsByCategory: `select count(*) count from products where category_id in `,
   getCategoryHierarchy: `with recursive cte as (
     select id, parent_category_id, title

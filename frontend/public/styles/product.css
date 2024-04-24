@@ -11,6 +11,8 @@
   max-width: 400px;
   width: auto;
   height: fit-content;
+  max-height: 600px;
+  object-fit: contain;
 }
 .product div.block2 {
   flex: 3;
