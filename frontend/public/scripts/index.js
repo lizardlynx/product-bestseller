@@ -151,6 +151,7 @@ function showSearchResults(e) {
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('header-holder').innerHTML = `
     <header>
+      <a href="/lists.html">Списки</a>
       <div class="wrapper">
         <div class="categories"></div>
         <div class="search-field">

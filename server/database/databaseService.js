@@ -177,6 +177,16 @@ class DatabaseService {
   async getProductsByName(name) {
     return await db.getProductsByName(name);
   }
+
+  async getAllLists() {
+    return await db.getAllLists();
+  }
+
+  async getListById(id) {
+    const res = await db.getListById(id);
+    const listFormatted = await dataFormatter.formatListData(res);
+    return listFormatted;
+  }
 }
 
 const ds = new DatabaseService();

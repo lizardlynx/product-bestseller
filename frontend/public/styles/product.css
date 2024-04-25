@@ -83,10 +83,6 @@
   cursor: pointer;
 }
 
-.chart-holder {
-  margin-top: 50px;
-}
-
 .shop-comparer .shop-title {
   color: #4c4553;
   font-size: 24px;
@@ -97,36 +93,6 @@
 
 .shop-comparer .shop {
   max-width: 500px;
-}
-
-.chart-buttons {
-  margin: 40px 0;
-}
-
-.chart-buttons .chart-opener-button {
-  margin-right: 20px;
-}
-
-.chart-opener-button {
-  padding: 10px;
-  font-size: 15px;
-  font-weight: 400;
-  background-color: #eaf2ff;
-  border: 2px solid #500;
-  border-radius: 4px;
-}
-
-.chart-opener-button:hover {
-  color: #990000;
-  cursor: pointer;
-}
-
-.chart-holder.hidden {
-  display: none;
-}
-
-.chart-opener-button.clicked {
-  background-color: gray;
 }
 
 .block2 .naming {

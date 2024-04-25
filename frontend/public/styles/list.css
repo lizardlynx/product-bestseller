@@ -1,0 +1,23 @@
+td {
+  background-color: #eaf2ff;
+  padding: 15px;
+}
+
+tr:last-of-type > td {
+  background-color: #ff5050;
+}
+
+thead > tr > th {
+  background-color: #ffeaea;
+  padding: 15px;
+}
+
+td > a {
+  color:  #990000;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+table.list {
+  margin: 0 auto;
+}

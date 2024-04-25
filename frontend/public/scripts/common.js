@@ -59,3 +59,22 @@ export function createPagination(pageCount, pages, pageNumber, url) {
 
   pages.innerHTML += `<a class="page ${(pageNumber + 1 > pageCount)? 'disabled': ''}" href="${url}?pageNumber=${pageNumber + 1}">></a>`;
 }
+
+export function openTab(e) {
+  const tabs = document.getElementsByClassName('tab-holder');
+  const btns = document.getElementsByClassName('tab-opener-button');
+  for (const btn of btns) {
+    if (btn != e.target) btn.classList.remove('clicked');
+  }
+
+  for (const tab of tabs) {
+    if (!tab.classList.contains('hidden')) tab.classList.add('hidden');
+  }
+
+  if (!e.target.classList.contains('clicked')) {
+    const id = e.target.getAttribute('data-ref');
+    const tab = document.getElementById(id);
+    tab.classList.remove('hidden');
+    e.target.classList.add('clicked');
+  } else e.target.classList.remove('clicked');
+}

@@ -391,6 +391,20 @@ class DataFormatter {
     this.#insertShop = null;
     this.#categoriesToInsert = {};
   }
+
+  formatListData(data) {
+    const dataFormatted = {};
+    for (const row of data) {
+      const id = row.id;
+      const shopName = this.#shopsIds[row.shop_id.toString()].title;
+      if (!(id in dataFormatted)) {
+        dataFormatted[id] = {title: row.title};
+        dataFormatted[id].shops = {};
+      }
+      dataFormatted[id].shops[shopName] = {price: row.price, date: row.date};
+    }
+    return dataFormatted;
+  }
 }
 
 const df = new DataFormatter();

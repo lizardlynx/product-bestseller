@@ -86,6 +86,14 @@ module.exports = {
     inner join features f
     on p.id = f.product_id
     where p.brand = ? and p.weight_g = ?)`,
+  getAllLists: `select distinct list_id, title from lists`,
+  getListById: `select p.id, p.title, r.price, r.shop_id, MAX(r.date) as date from lists l
+    left join products p
+    on l.product_id = p.id
+    left join prices r
+    on l.product_id = r.product_id
+    where r.comment='price' and l.list_id=?
+    group by  p.id, p.title, r.price, r.shop_id`,
   recreateDbQuery: `
       drop table if exists shop_categories_match;
       drop table if exists features;

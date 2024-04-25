@@ -130,6 +130,7 @@ header {
   width: fit-content;
   position: absolute;
   box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px;
+  z-index: 5;
 }
 
 #search-results > a {
@@ -161,5 +162,39 @@ header {
 }
 
 #search-results.hidden {
+  display: none;
+}
+
+.tab-buttons {
+  margin: 40px 0;
+}
+
+.tab-buttons .tab-opener-button {
+  margin-right: 20px;
+}
+
+.tab-opener-button {
+  padding: 10px;
+  font-size: 15px;
+  font-weight: 400;
+  background-color: #eaf2ff;
+  border: 2px solid #500;
+  border-radius: 4px;
+}
+
+.tab-opener-button:hover {
+  color: #990000;
+  cursor: pointer;
+}
+
+.tab-opener-button.clicked {
+  background-color: gray;
+}
+
+.tab-holder {
+  margin-top: 50px;
+}
+
+.tab-holder.hidden {
   display: none;
 }

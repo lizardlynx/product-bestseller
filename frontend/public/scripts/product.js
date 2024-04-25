@@ -1,26 +1,6 @@
 import { buildChart } from './chart.js';
 import { dbShopsData } from './index.js';
-import { initError, insertBreadcrumbs, firstToUpper } from './common.js';
-
-function openChart(e) {
-  const charts = document.getElementsByClassName('chart-holder');
-  const btns = document.getElementsByClassName('chart-opener-button');
-  for (const btn of btns) {
-    if (btn != e.target) btn.classList.remove('clicked');
-  }
-
-  for (const chart of charts) {
-    if (!chart.classList.contains('hidden')) chart.classList.add('hidden');
-  }
-
-  if (!e.target.classList.contains('clicked')) {
-    const id = e.target.getAttribute('data-ref');
-    const chart = document.getElementById(id);
-    chart.classList.remove('hidden');
-    e.target.classList.add('clicked');
-  } else e.target.classList.remove('clicked');
-}
-
+import { initError, insertBreadcrumbs, firstToUpper, openTab } from './common.js';
 
 function createProductHTML(product) {
   const productDiv = document.createElement('div');
@@ -70,7 +50,7 @@ function createProductHTML(product) {
   html += '</div>';
 
   productDiv.innerHTML = html;
-  const chartButtons = document.getElementsByClassName('chart-buttons')[0];
+  const chartButtons = document.getElementsByClassName('tab-buttons')[0];
   const shopDivs = productDiv.getElementsByClassName('shop-name');
   for (let shopDiv of shopDivs) {
     const shop = shopDiv.getAttribute('data-shop');
@@ -81,9 +61,9 @@ function createProductHTML(product) {
     a.setAttribute('href', originalLinks[shop]);
     a.innerText = dbShopsData[shop].title;
     shopDiv.replaceWith(a);
-    chartButtons.innerHTML += `<button class="chart-opener-button" data-ref="${shop}-container">${dbShopsData[shop].title} зміна ціни</button>`;
+    chartButtons.innerHTML += `<button class="tab-opener-button" data-ref="${shop}-container">${dbShopsData[shop].title} зміна ціни</button>`;
   }
-  if (shopDivs.length > 1) chartButtons.innerHTML += `<button data-ref="price-compare-container" class="chart-opener-button">Порівняти ціни</button>`;
+  if (shopDivs.length > 1) chartButtons.innerHTML += `<button data-ref="price-compare-container" class="tab-opener-button">Порівняти ціни</button>`;
   return productDiv;
 }
 
@@ -101,9 +81,9 @@ async function loadProduct(productId) {
 
   const productDiv = createProductHTML(product);
   productHolder.appendChild(productDiv);
-  const chartButtons = document.getElementsByClassName('chart-opener-button');
+  const chartButtons = document.getElementsByClassName('tab-opener-button');
   for (const btn of chartButtons) {
-    btn.addEventListener('click', openChart);
+    btn.addEventListener('click', openTab);
   }
   insertBreadcrumbs(breadcrumbs);
 }
@@ -121,7 +101,7 @@ async function loadPrices(productId) {
     const shop = dbShopsData[shopId].title;
     const shopUrl = dbShopsData[shopId].product_url;
     const chartHolder = document.createElement('div');
-    chartHolder.classList.add('chart-holder', 'hidden');
+    chartHolder.classList.add('tab-holder', 'hidden');
     chartHolder.setAttribute('id', `${shopId}-container`);
     chartsHolder.appendChild(chartHolder);
     const data = resJSON[shopId];
@@ -138,12 +118,11 @@ async function loadPrices(productId) {
       data
     );
   }
-  console.log(shopsPrices);
 
   const shopKeys = Object.keys(resJSON);
   if (shopKeys.length > 1) {
     const chartHolder = document.createElement('div');
-    chartHolder.classList.add('chart-holder', 'hidden');
+    chartHolder.classList.add('tab-holder', 'hidden');
     chartHolder.setAttribute('id', `price-compare-container`);
     chartsHolder.appendChild(chartHolder);
     buildChart(

@@ -316,11 +316,28 @@ class Database {
 
   async getProductsByName(name) {
     this.#createConnection();
-    const [data, filed] = await this.#connection.query(
+    const [data, field] = await this.#connection.query(
       queries.getProductsByName,
       ['%' + name + '%']
     );
-    console.log(data);
+    this.#connection.release();
+    return data;
+  }
+
+  async getAllLists() {
+    this.#createConnection();
+    const [data, field] = await this.#connection.query(
+      queries.getAllLists
+    );
+    this.#connection.release();
+    return data;
+  }
+
+  async getListById(id) {
+    this.#createConnection();
+    const [data, field] = await this.#connection.query(
+      queries.getListById, [id]
+    );
     this.#connection.release();
     return data;
   }
