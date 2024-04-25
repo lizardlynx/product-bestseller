@@ -393,17 +393,52 @@ class DataFormatter {
   }
 
   formatListData(data) {
-    const dataFormatted = {};
+    const dataFormatted = {products: {}, list: null};
     for (const row of data) {
       const id = row.id;
       const shopName = this.#shopsIds[row.shop_id.toString()].title;
-      if (!(id in dataFormatted)) {
-        dataFormatted[id] = {title: row.title};
-        dataFormatted[id].shops = {};
+      if (!(id in dataFormatted.products)) {
+        dataFormatted.products[id] = {title: row.title};
+        dataFormatted.products[id].shops = {};
       }
-      dataFormatted[id].shops[shopName] = {price: row.price, date: row.date};
+      dataFormatted.products[id].shops[shopName] = {price: row.price, date: row.date};
+      // if (!(shopName in dataFormatted.prices)) dataFormatted.prices[shopName] = {name: shopName, dates: [], data: []};
+      // dataFormatted.prices[shopName]
     }
+    if (data.length > 0) dataFormatted.list = data[0].list;
     return dataFormatted;
+  }
+
+  formatListPrices(data) {
+    const pricesFormatted = {};
+    const shopKeys = [];
+    for (const row of data) {
+      const shop = row.shop_id;
+      const shopName = this.#shopsIds[shop.toString()].title;
+      if (!(shopName in pricesFormatted)) pricesFormatted[shopName] = {name: shopName, dates: [], data: []};
+      pricesFormatted[shopName].dates.push(row.date);
+      pricesFormatted[shopName].data.push([Date.parse(row.date), +row.price]);
+      if(!shopKeys.includes(shop)) shopKeys.push(shop);
+    } 
+    return { data: Object.values(pricesFormatted), keys: shopKeys };
+  }
+
+  formatSearchData(search) {
+    const {data, shopIds} = search;
+    const formattedData = {};
+    data.forEach(row => {
+      formattedData[row.id] = row;
+      row.shops = [];
+    });
+    shopIds.forEach(row => formattedData[row.product_id].shops.push(row.shop_id));
+    return Object.values(formattedData);
+  }
+
+  formatListToInsert(data, listId) {
+    const res = [];
+    console.log(listId);
+    data.products.forEach(id => res.push(listId, id, data.title));
+    return res;
   }
 }
 

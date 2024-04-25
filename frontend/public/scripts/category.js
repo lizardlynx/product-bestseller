@@ -1,9 +1,9 @@
-import { dbShopsData } from './index.js';
 import {
   initError,
   insertBreadcrumbs,
   getJsonFromUrl,
   createPagination,
+  dbShopsData
 } from './common.js';
 
 function createProductHTML(product) {

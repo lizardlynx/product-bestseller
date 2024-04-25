@@ -40,6 +40,8 @@ module.exports = {
   where p.title like ? and f.title = 'id'
   group by p.id, p.title
   order by count desc, p.title asc limit 10 offset 0`,
+  getShopIdsByProduct: `select distinct product_id, shop_id from features
+    where product_id in `,
   countProductsByCategory: `select count(*) count from products where category_id in `,
   getCategoryHierarchy: `with recursive cte as (
     select id, parent_category_id, title
@@ -65,9 +67,14 @@ module.exports = {
     where p1.comment = 'price' and p1.product_id in `,
   getPricesOfProductsGroupBy: `group by p1.product_id, p1.shop_id, p1.comment, p1.price order by date`,
   getProduct: 'select * from products where id=?',
-  getPricesByProduct: `select shop_id, comment, max(date) as date, price from prices
-    where product_id = ?
-    group by shop_id, comment, price`,
+  getPricesByProduct: `select a.comment, a.shop_id, a.date, b.price from 
+    (select distinct comment, product_id, shop_id, max(date) as date
+    from prices
+    where product_id=?
+    group by comment, shop_id, product_id) a 
+    inner join prices b
+    on a.date=b.date
+    where a.shop_id=b.shop_id and a.comment=b.comment and b.product_id=a.product_id`,
   getFeaturesByProduct:
     'select shop_id, title, value from features where product_id = ?',
   getPricesData:
@@ -87,13 +94,19 @@ module.exports = {
     on p.id = f.product_id
     where p.brand = ? and p.weight_g = ?)`,
   getAllLists: `select distinct list_id, title from lists`,
-  getListById: `select p.id, p.title, r.price, r.shop_id, MAX(r.date) as date from lists l
+  getListById: `select p.id, p.title, l.title as list, r.price, r.shop_id, MAX(r.date) as date from lists l
     left join products p
     on l.product_id = p.id
     left join prices r
     on l.product_id = r.product_id
     where r.comment='price' and l.list_id=?
-    group by  p.id, p.title, r.price, r.shop_id`,
+    group by  p.id, p.title, r.price, r.shop_id, l.title`,
+  getListPrices: `select sum(price) as price, DATE(date) as date, shop_id
+    from prices
+    where comment='price' and product_id in `,
+  getListPricesGroupBy: ` group by DATE(date), shop_id order by date `,
+  selectFreeListId: `select MAX(list_id) + 1 as id from lists`,
+  insertNewList: `insert into lists(list_id, product_id, title) values `,
   recreateDbQuery: `
       drop table if exists shop_categories_match;
       drop table if exists features;

@@ -24,6 +24,12 @@ const list = (fastify, _, done) => {
     const res = await databaseService.getListById(id);
     reply.type('application/json').send(res);
   });
+  
+  fastify.post('/lists/add', async function (req, reply) {
+    const data = JSON.parse(req.body);
+    const res = await databaseService.createList(data);
+    reply.type('application/json').send(res);
+  });
 
   done();
 };

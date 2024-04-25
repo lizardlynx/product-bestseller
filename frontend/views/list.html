@@ -1,5 +1,11 @@
 <!DOCTYPE html>
 <head>
+  <script src="/libs/highcharts.js"></script>
+  <script src="/libs/modules/data.js"></script>
+  <script src="/libs/modules/series-label.js"></script>
+  <script src="/libs/modules/exporting.js"></script>
+  <script src="/libs/modules/export-data.js"></script>
+  <script src="/libs/modules/accessibility.js"></script>
   <script type="module" src="/scripts/index.js"></script>
   <script type="module" src="/scripts/list.js"></script>
   <link rel="stylesheet" href="/styles/index.css">
@@ -8,11 +14,7 @@
 <body>
   <div id="header-holder"></div>
   <div class="wrapper">
-    <div class="tab-buttons">
-      <button class="tab-opener-button" data-ref="table-0">By Shop</button>
-      <button class="tab-opener-button" data-ref="table-1">By Products</button>
-    </div>
-    <div class="list"></div>
+    <div class="list-holder"></div>
   </div>
 </body>
 </html>

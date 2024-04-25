@@ -1,7 +1,16 @@
+let interval = null;
+export const dbShopsData = {};
+
 export function initError(message) {
   const errorHolder = document.getElementsByClassName('error-holder')[0];
   errorHolder.classList.add('filled');
   errorHolder.innerText = message;
+}
+
+export function clearError() {
+  const errorHolder = document.getElementsByClassName('error-holder')[0];
+  errorHolder.classList.remove('filled');
+  errorHolder.innerText = '';
 }
 
 export function insertBreadcrumbs(breadcrumbs) {
@@ -78,3 +87,61 @@ export function openTab(e) {
     e.target.classList.add('clicked');
   } else e.target.classList.remove('clicked');
 }
+
+
+export function hideSearchResults(e, id) {
+  document.getElementById(id).classList.add('hidden');
+}
+
+export function showSearchResults(e, id) {
+  if (!e || e.target.value.trim().length != 0)  document.getElementById(id).classList.remove('hidden');
+}
+
+export function addSearchItem(item, id, additionalClasses, callback = null) {
+  const searchResults = document.getElementById(id);
+  const row = document.createElement('div');
+  row.classList.add('row-search-holder');
+  row.setAttribute('data-id', item.id);
+  const itemA = document.createElement('a');
+  itemA.classList.add('product-result');
+  additionalClasses.forEach(item => itemA.classList.add(item));
+  itemA.setAttribute('href', '/products/' + item.id);
+  let imgs = '<div class="shop-name search">';
+  item.shops.forEach(shop => imgs += `<div class="shop-logo"><img src="/images/${dbShopsData[shop].title}.png"></div>`);
+  imgs += '</div>';
+  itemA.innerHTML = imgs + `<div class="search-product-title">${item.title}</div>`;
+  row.appendChild(itemA);
+  searchResults.appendChild(row);
+  if (callback) callback(row);
+}
+
+export function initSearch(inputId, resultId, additionalClasses = [], callback = null) {
+  const productSearch = document.getElementById(inputId);
+  const hideResultSet = (e) => hideSearchResults(e, resultId);
+  productSearch.addEventListener('keyup', (e) => searchProduct(e, resultId, additionalClasses, callback));
+  productSearch.addEventListener('focusout', hideResultSet);
+  productSearch.addEventListener('focusin', (e) => showSearchResults(e, resultId));
+  
+  const searchRes = document.getElementById(resultId);
+  searchRes.addEventListener('mouseenter', () => productSearch.removeEventListener('focusout', hideResultSet));
+  searchRes.addEventListener('mouseleave', () => productSearch.addEventListener('focusout', hideResultSet));
+}
+
+function searchProduct(e, resultId, additionalClasses, callback) {
+  clearInterval(interval);
+  if (e.target.value.trim().length == 0) return hideSearchResults(null, resultId);
+  interval = setTimeout(async () => {
+    const res = await fetch(
+      '/products?' + new URLSearchParams({ name: e.target.value.trim() }),
+      {
+        method: 'GET',
+      }
+    );
+    if (!res.ok) return initError(await res.text());
+
+    const resJSON = await res.json();
+    document.getElementById(resultId).innerHTML = '';
+    showSearchResults(null, resultId);
+    resJSON.forEach(item => addSearchItem(item, resultId, additionalClasses, callback));
+  }, 1000);
+};

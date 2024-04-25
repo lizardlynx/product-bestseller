@@ -175,7 +175,9 @@ class DatabaseService {
   }
 
   async getProductsByName(name) {
-    return await db.getProductsByName(name);
+    const data = await db.getProductsByName(name);
+    const formattedData = dataFormatter.formatSearchData(data);
+    return formattedData;
   }
 
   async getAllLists() {
@@ -184,8 +186,17 @@ class DatabaseService {
 
   async getListById(id) {
     const res = await db.getListById(id);
-    const listFormatted = await dataFormatter.formatListData(res);
-    return listFormatted;
+    const listFormatted = dataFormatter.formatListData(res);
+    const productsIds = Object.keys(listFormatted.products);
+    const prices = await db.getListPrices(productsIds);
+    const pricesFormatted = dataFormatter.formatListPrices(prices);
+    return {list: listFormatted, prices: pricesFormatted};
+  }
+
+  async createList(data) {
+    const listId = await db.selectFreeListId();
+    const formattedData = dataFormatter.formatListToInsert(data, listId);
+    await db.insertNewList(formattedData);
   }
 }
 

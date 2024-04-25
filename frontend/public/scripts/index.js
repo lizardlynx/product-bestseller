@@ -1,13 +1,13 @@
-export let dbShopsData = null;
-let interval = null;
-import { initError } from './common.js';
+import { initError, initSearch, dbShopsData } from './common.js';
 
 async function loadShops() {
   const res = await fetch('/shops', {
     method: 'GET',
   });
   const resJSON = await res.json();
-  dbShopsData = resJSON;
+  for (const [key, value] of Object.entries(resJSON)) {
+    dbShopsData[key] = value;
+  }
 }
 
 async function getCategoryProducts(id) {
@@ -112,51 +112,15 @@ async function loadCategories() {
   }
 }
 
-function addSearchItem(item) {
-  const searchResults = document.getElementById('search-results');
-  const itemA = document.createElement('a');
-  itemA.classList.add('product-result');
-  itemA.setAttribute('href', '/products/' + item.id);
-  itemA.innerText = item.title;
-  searchResults.appendChild(itemA);
-}
-
-function searchProduct(e) {
-  clearInterval(interval);
-  if (e.target.value.trim().length == 0) return hideSearchResults();
-  interval = setTimeout(async () => {
-    const res = await fetch(
-      '/products?' + new URLSearchParams({ name: e.target.value.trim() }),
-      {
-        method: 'GET',
-      }
-    );
-    if (!res.ok) return initError(await res.text());
-
-    const resJSON = await res.json();
-    document.getElementById('search-results').innerHTML = '';
-    showSearchResults();
-    resJSON.forEach(addSearchItem);
-  }, 1000);
-}
-
-function hideSearchResults(e) {
-  document.getElementById('search-results').classList.add('hidden');
-}
-
-function showSearchResults(e) {
-  if (!e || e.target.value.trim().length != 0)  document.getElementById('search-results').classList.remove('hidden');
-}
-
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('header-holder').innerHTML = `
     <header>
       <a href="/lists.html">Списки</a>
       <div class="wrapper">
         <div class="categories"></div>
         <div class="search-field">
-          <input type="text" id="product-search" placeholder="Search for product.." title="Type in a product">
-          <div id="search-results"></div>
+          <input type="text" class="product-search" id="product-search" placeholder="Введіть продукт.." title="Введіть назву продукта">
+          <div class="search-results" id="search-results"></div>
         </div>
       </div>
       <h2>Empty database and load: </h2>
@@ -183,15 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
     .getElementById('all')
     .addEventListener('click', () => loadShopData('all'));
   document.getElementById('products').addEventListener('click', loadProducts);
-
-  const productSearch = document.getElementById('product-search');
-  productSearch.addEventListener('keyup', searchProduct);
-  productSearch.addEventListener('focusout', hideSearchResults);
-  productSearch.addEventListener('focusin', showSearchResults);
-  
-  const searchRes = document.getElementById('search-results');
-  searchRes.addEventListener('mouseenter', () => productSearch.removeEventListener('focusout', hideSearchResults));
-  searchRes.addEventListener('mouseleave', () => productSearch.addEventListener('focusout', hideSearchResults));
-
   loadShops();
+
+  initSearch('product-search', 'search-results');
 });

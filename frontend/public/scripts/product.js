@@ -1,6 +1,5 @@
 import { buildChart } from './chart.js';
-import { dbShopsData } from './index.js';
-import { initError, insertBreadcrumbs, firstToUpper, openTab } from './common.js';
+import { initError, insertBreadcrumbs, firstToUpper, openTab, dbShopsData } from './common.js';
 
 function createProductHTML(product) {
   const productDiv = document.createElement('div');

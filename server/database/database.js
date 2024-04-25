@@ -236,6 +236,7 @@ class Database {
   }
 
   #createQuestionMarkSet(matrix, insertLen = null) {
+    console.log(matrix);
     const length = matrix.length;
     if (length == 0) return null;
     const elementLength = insertLen ? insertLen : matrix[0].length;
@@ -320,8 +321,15 @@ class Database {
       queries.getProductsByName,
       ['%' + name + '%']
     );
+    if (data.length == 0) return {data, shopIds: []};
+    const ids = [];
+    data.forEach(row => ids.push(row.id));
+    const [shopIds, fields] = await this.#connection.query(
+      queries.getShopIdsByProduct + this.#createQuestionMarkString(ids),
+      ids
+    );
     this.#connection.release();
-    return data;
+    return {data, shopIds};
   }
 
   async getAllLists() {
@@ -340,6 +348,33 @@ class Database {
     );
     this.#connection.release();
     return data;
+  }
+
+  async getListPrices(ids) {
+    this.#createConnection();
+    const [data, field] = await this.#connection.query(
+      queries.getListPrices + this.#createQuestionMarkString(ids) + queries.getListPricesGroupBy, ids
+    );
+    this.#connection.release();
+    return data;
+  }
+
+  async selectFreeListId() {
+    this.#createConnection();
+    const [data, field] = await this.#connection.query(
+      queries.selectFreeListId,
+    );
+    this.#connection.release();
+    return data[0].id;
+  }
+
+  async insertNewList(list) {
+    this.#createConnection();
+    const [data, field] = await this.#connection.query(
+      queries.insertNewList + this.#createQuestionMarkSet(list, 3), list
+    );
+    this.#connection.release();
+    return data.id;
   }
 }
 

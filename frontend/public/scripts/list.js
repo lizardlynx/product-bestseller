@@ -1,5 +1,5 @@
-import { dbShopsData } from './index.js';
-import { initError, openTab } from './common.js';
+import { initError, openTab, dbShopsData } from './common.js';
+import { buildChart } from './chart.js';
 
 function updateColor(colorChange, id) {
   const table = document.getElementById(id);
@@ -40,7 +40,7 @@ function recount(resJSON, type) {
   let cheapestArr = [];
 
   for (const [id, product] of Object.entries(resJSON)) {
-    let productTr = `<tr><td><a href="/product/${id}">${product.title}</a></td>`;
+    let productTr = `<tr><td><a href="/products/${id}">${product.title}</a></td>`;
     let minPrice = {price: Infinity, shop: null, shopI: null};
     for (const [i, shopObj] of Object.entries(dbShopsData)) {
       const shop = shopObj.title;
@@ -69,7 +69,7 @@ function recount(resJSON, type) {
   for (const [i, shopObj] of Object.entries(dbShopsData)) {
     const shop = shopObj.title;
     const price = priceTotal[shop];
-    resTr += `<td data-shop="${i}">${price}</td>`;
+    resTr += `<td data-shop="${i}">${Math.round(price * 100) / 100}</td>`;
     fullPrice += price;
     if (price < minPrice) {
       minPrice = price;
@@ -83,7 +83,7 @@ function recount(resJSON, type) {
     tbody.innerHTML += `<tr><td>Всього</td>${resTr}</tr>`;
     updateColor(iShop, 'table-'+type);
   } else if (type == 1) {
-    resTr += `<td class="full-price">${fullPrice}</td>`;
+    resTr += `<td class="full-price">${Math.round(fullPrice * 100) / 100 }</td>`;
     tbody.innerHTML += `<tr><td>Всього</td>${resTr}</tr>`;
     updateColor(cheapestArr, 'table-'+type);
   }
@@ -98,12 +98,36 @@ async function loadList(id) {
   if (!res.ok) return initError(await res.text());
 
   const resJSON = await res.json();
-  recount(resJSON, 0);
-  recount(resJSON, 1);
+  const listHolder = document.getElementsByClassName('list-holder')[0];
+  listHolder.innerHTML = `
+  <h1>${resJSON.list.list}</h1>
+  <div class="tab-buttons">
+    <button class="tab-opener-button" data-ref="table-0">За магазинами</button>
+    <button class="tab-opener-button" data-ref="table-1">За продуктами</button>
+    <button class="tab-opener-button" data-ref="price-compare-container">Динаміка зміни вартості</button>
+  </div>
+  <div class="list"></div>`;
+  recount(resJSON.list.products, 0);
+  recount(resJSON.list.products, 1);
   const tableButtons = document.getElementsByClassName('tab-opener-button');
   for (const btn of tableButtons) {
     btn.addEventListener('click', openTab);
   }
+
+  const chartHolder = document.createElement('div');
+  chartHolder.classList.add('tab-holder', 'hidden');
+  chartHolder.setAttribute('id', `price-compare-container`);
+  listHolder.appendChild(chartHolder);
+  buildChart(
+    'price-compare-container',
+    'Порівняння вартостей',
+    resJSON.prices.keys.map((shopId) => dbShopsData[shopId].title).join(', '),
+    resJSON.prices.keys.map((shopId) => dbShopsData[shopId].product_url).join(', '),
+    'Ціна, грн',
+    'травень-червень, 2023',
+    4,
+    resJSON.prices.data
+  );
 }
 
 document.addEventListener('DOMContentLoaded', () => {

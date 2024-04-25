@@ -1,0 +1,64 @@
+#product-search-list,
+#list-title {
+  border: 2px solid #900;
+  margin-right: 30px;
+}
+
+hr {
+  border: none;
+  height: 2px;
+  width: 100%;
+  margin: 30px 0;
+  background-color: #900;
+}
+
+.disable-a {
+  pointer-events: none;
+  cursor: pointer;
+}
+
+.row-search-holder {
+  cursor: pointer;
+}
+
+.row-product {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  width: fit-content;
+}
+
+.product-name {
+  margin-right: 50px;
+}
+
+.products-set {
+  margin: 40px 0;
+  font-weight: 600;
+}
+
+.product-remove {
+  color:#900;
+  cursor: pointer;
+}
+
+.lists > a {
+  display: block;
+}
+
+.upper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+button.submit {
+  height: fit-content;
+  padding: 15px;
+  background-color: #900;
+  border: none;
+  color: white;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
