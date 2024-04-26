@@ -55,6 +55,7 @@ function createProductHTML(product) {
     const shop = shopDiv.getAttribute('data-shop');
     const a = document.createElement('a');
     a.classList.add('shop-name');
+    a.classList.add('shop-name-desc');
     a.classList.add(dbShopsData[shop].title);
     a.setAttribute('title', 'Оригінальний товар');
     a.setAttribute('href', originalLinks[shop]);

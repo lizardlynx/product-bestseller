@@ -186,11 +186,11 @@ class DatabaseService {
 
   async getListById(id) {
     const res = await db.getListById(id);
-    const listFormatted = dataFormatter.formatListData(res);
-    const productsIds = Object.keys(listFormatted.products);
-    const prices = await db.getListPrices(productsIds);
+    const {dataFormatted, productsIdsPrices} = dataFormatter.formatListData(res);
+    const [prices, byShop] = await db.getListPrices(productsIdsPrices, Object.keys(dataFormatted.products));
     const pricesFormatted = dataFormatter.formatListPrices(prices);
-    return {list: listFormatted, prices: pricesFormatted};
+    const pricesByShopFormatted = dataFormatter.formatListPricesByShop(byShop);
+    return {list: dataFormatted, prices: pricesFormatted, byShop: pricesByShopFormatted};
   }
 
   async createList(data) {

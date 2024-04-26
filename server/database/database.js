@@ -350,13 +350,16 @@ class Database {
     return data;
   }
 
-  async getListPrices(ids) {
+  async getListPrices(ids, allIds) {
     this.#createConnection();
     const [data, field] = await this.#connection.query(
       queries.getListPrices + this.#createQuestionMarkString(ids) + queries.getListPricesGroupBy, ids
     );
+    const [dataByShop, field2] = await this.#connection.query(
+      queries.getListPricesByShop + this.#createQuestionMarkString(allIds), allIds
+    );
     this.#connection.release();
-    return data;
+    return [data, dataByShop];
   }
 
   async selectFreeListId() {

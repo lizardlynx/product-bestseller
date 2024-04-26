@@ -21,3 +21,11 @@ td > a {
 table.list {
   margin: 0 auto;
 }
+
+.table-points {
+  margin-bottom: 30px;
+}
+
+.list {
+  min-height: 200px;
+}

@@ -394,19 +394,24 @@ class DataFormatter {
 
   formatListData(data) {
     const dataFormatted = {products: {}, list: null};
+    const productsIdsPrices = [];
     for (const row of data) {
       const id = row.id;
       const shopName = this.#shopsIds[row.shop_id.toString()].title;
       if (!(id in dataFormatted.products)) {
-        dataFormatted.products[id] = {title: row.title};
-        dataFormatted.products[id].shops = {};
+        dataFormatted.products[id] = {title: row.title, shops: {}, tableShopIgnore: true};
       }
       dataFormatted.products[id].shops[shopName] = {price: row.price, date: row.date};
-      // if (!(shopName in dataFormatted.prices)) dataFormatted.prices[shopName] = {name: shopName, dates: [], data: []};
-      // dataFormatted.prices[shopName]
+    }
+
+    for (const [id, product] of Object.entries(dataFormatted.products)) {
+      if (Object.keys(product.shops).length == Object.keys(this.#shopsIds).length) {
+        product.tableShopIgnore = false;
+        productsIdsPrices.push(id)
+      }
     }
     if (data.length > 0) dataFormatted.list = data[0].list;
-    return dataFormatted;
+    return {dataFormatted, productsIdsPrices};
   }
 
   formatListPrices(data) {
@@ -421,6 +426,18 @@ class DataFormatter {
       if(!shopKeys.includes(shop)) shopKeys.push(shop);
     } 
     return { data: Object.values(pricesFormatted), keys: shopKeys };
+  }
+
+  formatListPricesByShop(data) {
+    const pricesByShop = {};
+    console.log(data);
+    for (const row of data) {
+      if (!(row.shop_id in pricesByShop)) pricesByShop[row.shop_id] = {};
+      if (!(row.product_id in pricesByShop[row.shop_id])) pricesByShop[row.shop_id][row.product_id] = {name: row.title, dates: [], data: []};
+      pricesByShop[row.shop_id][row.product_id].dates.push(row.date);
+      pricesByShop[row.shop_id][row.product_id].data.push([Date.parse(row.date), +row.price]);
+    }
+    return pricesByShop;
   }
 
   formatSearchData(search) {

@@ -44,6 +44,11 @@ hr {
 
 .lists > a {
   display: block;
+  font-size: 20px;
+  font-family: monospace;
+  margin: 30px auto;
+  color: #900;
+  text-decoration-line: underline;
 }
 
 .upper {

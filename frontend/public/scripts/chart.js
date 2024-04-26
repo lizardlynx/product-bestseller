@@ -6,10 +6,18 @@ export function buildChart(
   yText,
   xText,
   pointStart,
-  series
+  series,
+  type = 'line'
 ) {
-  // document.getElementById(id).style.display = 'block';
   Highcharts.chart(id, {
+    chart: {
+      type,
+      labels: {
+        style: {
+            color: 'black'
+        }
+      }
+    },
     title: {
       text,
       align: 'left',
@@ -43,6 +51,10 @@ export function buildChart(
       align: 'right',
       verticalAlign: 'middle',
     },
+    tooltip: {
+      pointFormat: '<span style="color:{series.color}">{series.name}</span>: {point.y:,.1f} грн<br/>',
+      split: true
+    },
 
     plotOptions: {
       series: {
@@ -51,6 +63,12 @@ export function buildChart(
         },
         pointStart,
       },
+      area: {
+        stacking: 'normal',
+        marker: {
+            enabled: false
+        }
+      }
     },
 
     series,

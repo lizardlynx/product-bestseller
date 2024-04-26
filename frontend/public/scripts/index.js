@@ -38,35 +38,6 @@ function createCategoryHTML(category) {
   return categoryDiv;
 }
 
-async function loadShopData(shopName) {
-  const res = await fetch('/categories/' + shopName, {
-    method: 'POST',
-  });
-  if (!res.ok) return initError(await res.text());
-
-  const resJSON = await res.json();
-  const resultWindow = document.getElementById('result-window');
-  resultWindow.innerHTML = `Load${shopName}Data<br>Status Code: ${
-    resJSON.statusCode
-  }<br>Results: <br>${
-    resJSON.data.success ? 'Success!' : 'Error!'
-  }<br> Message: ${resJSON.data.message}`;
-  loadCategories();
-}
-
-async function loadProducts() {
-  const res = await fetch('/products/all', {
-    method: 'POST',
-  });
-  if (!res.ok) return initError(await res.text());
-
-  const resJSON = await res.json();
-  console.log(resJSON);
-  // const resultWindow = document.getElementById('result-window');
-  // resultWindow.innerHTML = `Load${shopName}Data<br>Status Code: ${resJSON.statusCode}<br>Results: <br>${resJSON.data.success ? 'Success!' : 'Error!'}<br> Message: ${resJSON.data.message}`;
-  // loadCategories();
-}
-
 async function loadCategories() {
   const res = await fetch('/categories', {
     method: 'GET',
@@ -77,7 +48,7 @@ async function loadCategories() {
   const categoriesHolder = document.getElementsByClassName('categories')[0];
   categoriesHolder.innerHTML = '';
 
-  const savedElements = {}; // parentId: [elements]
+  const savedElements = {};
 
   for (let category of categories) {
     const categoryEl = createCategoryHTML(category);
@@ -115,38 +86,25 @@ async function loadCategories() {
 document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('header-holder').innerHTML = `
     <header>
-      <a href="/lists.html">Списки</a>
       <div class="wrapper">
+        <a class="page-link" href="/admin.html">Адмінпанель</a>
+        <a class="page-link" href="/lists.html">Списки</a>
         <div class="categories"></div>
         <div class="search-field">
           <input type="text" class="product-search" id="product-search" placeholder="Введіть продукт.." title="Введіть назву продукта">
           <div class="search-results" id="search-results"></div>
         </div>
       </div>
-      <h2>Empty database and load: </h2>
-      <button id="auchan">Only Auchan</button>
-      <button id="silpo">Only Silpo</button>
-      <button id="all">All</button>
-      <button id="products">Products</button>
-      <div id="result-window"></div>
     </header>
     <div class="wrapper">
       <div class="breadcrumbs"></div>
       <div class="error-holder"></div>
     </div>
   `;
+  document.getElementsByTagName('body')[0].innerHTML += `<footer></footer>`;
+  document.getElementById('overlay').style.display = 'none';
 
   loadCategories();
-  document
-    .getElementById('auchan')
-    .addEventListener('click', () => loadShopData('auchan'));
-  document
-    .getElementById('silpo')
-    .addEventListener('click', () => loadShopData('silpo'));
-  document
-    .getElementById('all')
-    .addEventListener('click', () => loadShopData('all'));
-  document.getElementById('products').addEventListener('click', loadProducts);
   loadShops();
 
   initSearch('product-search', 'search-results');

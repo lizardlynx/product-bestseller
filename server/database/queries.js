@@ -101,10 +101,15 @@ module.exports = {
     on l.product_id = r.product_id
     where r.comment='price' and l.list_id=?
     group by  p.id, p.title, r.price, r.shop_id, l.title`,
-  getListPrices: `select sum(price) as price, DATE(date) as date, shop_id
+  getListPrices: `select sum(price) as price, DATE_SUB(DATE(date), INTERVAL 21 HOUR) as date, shop_id
     from prices
     where comment='price' and product_id in `,
-  getListPricesGroupBy: ` group by DATE(date), shop_id order by date `,
+  getListPricesGroupBy: ` group by DATE_SUB(DATE(date), INTERVAL 21 HOUR), shop_id order by date `,
+  getListPricesByShop: `select p.price, DATE_SUB(DATE(p.date), INTERVAL 21 HOUR) as date, p.shop_id, p.product_id, a.title
+    from prices p
+    inner join products a
+    on p.product_id = a.id
+    where p.comment='price' and p.product_id in `,
   selectFreeListId: `select MAX(list_id) + 1 as id from lists`,
   insertNewList: `insert into lists(list_id, product_id, title) values `,
   recreateDbQuery: `

@@ -4,13 +4,34 @@
   <script type="module" src="/scripts/lists.js"></script>
   <link rel="stylesheet" href="/styles/index.css">
   <link rel="stylesheet" href="/styles/lists.css">
+  <style>
+    body{
+      margin: 0;
+      padding: 0;
+    }
+    #overlay {
+      margin: 0;
+      position: fixed;
+      width: 100vw;
+      height: 100vh;
+      background-color: white;
+      z-index: 101;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
 </head>
 <body>
+  <div id="overlay">Loading...</div>
   <div id="header-holder"></div>
   <div class="wrapper">
+    <h2>Списки товарів</h2>
     <div class="lists"></div>
     <hr>
     <div class="create-list">
+      <h2>Створити список</h2>
       <div class="upper">
         <input autocomplete="off" class="product-search" type="text" placeholder="Введіть назву списку" id="list-title">
         <button class="submit">Створити список</button>
