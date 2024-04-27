@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<head>
+  <script src="/libs/highcharts.js"></script>
+  <script src="/libs/modules/data.js"></script>
+  <script src="/libs/modules/series-label.js"></script>
+  <script src="/libs/modules/exporting.js"></script>
+  <script src="/libs/modules/export-data.js"></script>
+  <script src="/libs/modules/accessibility.js"></script>
+  <script type="module" src="/scripts/index.js"></script>
+  <script type="module" src="/scripts/analysis.js"></script>
+  <link rel="stylesheet" href="/styles/index.css">
+  <link rel="stylesheet" href="/styles/analysis.css">
+  <style>
+    body{
+      margin: 0;
+      padding: 0;
+    }
+    #overlay {
+      margin: 0;
+      position: fixed;
+      width: 100vw;
+      height: 100vh;
+      background-color: white;
+      z-index: 101;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <div id="overlay">Loading...</div>
+  <div id="header-holder"></div>
+  <div class="wrapper">
+    <h1>Аналіз магазинів</h2>
+    <p>* Порівняння цін на продукти, що існують в усіх магазинах</p>
+    <div id="chart-compare-shop-prices"></div>
+  </div>
+</body>
+</html>

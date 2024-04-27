@@ -26,6 +26,6 @@ table.list {
   margin-bottom: 30px;
 }
 
-.list {
-  min-height: 200px;
+.list-holder {
+  min-height: 400px;
 }

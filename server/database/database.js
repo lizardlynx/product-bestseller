@@ -379,6 +379,15 @@ class Database {
     this.#connection.release();
     return data.id;
   }
+
+  async getShopPricesByDate() {
+    this.#createConnection();
+    const [data, field] = await this.#connection.query(
+      queries.getShopPricesByDate
+    );
+    this.#connection.release();
+    return data;
+  }
 }
 
 const db = new Database();

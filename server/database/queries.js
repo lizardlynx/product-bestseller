@@ -39,7 +39,7 @@ module.exports = {
   on p.id = f.product_id
   where p.title like ? and f.title = 'id'
   group by p.id, p.title
-  order by count desc, p.title asc limit 10 offset 0`,
+  order by CHAR_LENGTH(p.title) asc, count desc, p.title asc limit 10 offset 0`,
   getShopIdsByProduct: `select distinct product_id, shop_id from features
     where product_id in `,
   countProductsByCategory: `select count(*) count from products where category_id in `,
@@ -112,6 +112,22 @@ module.exports = {
     where p.comment='price' and p.product_id in `,
   selectFreeListId: `select MAX(list_id) + 1 as id from lists`,
   insertNewList: `insert into lists(list_id, product_id, title) values `,
+  getShopPricesByDate: `select DATE(b.date) as sumdate, sum(b.price) as sum, b.shop_id from (
+      select count(DATE(date))/(1 + DATEDIFF(max(DATE(date)),min(DATE(date)))) expr, product_id as id from prices 
+      where comment='price' and 
+      product_id in (select b.product_id from (select p.id as product_id, p.title, count(distinct f.shop_id) res 
+        from products p
+        inner join features f
+        on p.id=f.product_id
+        where p.category_id=420
+        group by p.id, p.title
+        having res=2) b) 
+      group by product_id
+      having expr = 2) a
+    inner join prices b
+    on a.id = b.product_id
+    where b.comment='price'
+    group by sumdate, shop_id`,
   recreateDbQuery: `
       drop table if exists shop_categories_match;
       drop table if exists features;

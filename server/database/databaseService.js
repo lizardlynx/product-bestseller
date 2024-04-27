@@ -198,6 +198,13 @@ class DatabaseService {
     const formattedData = dataFormatter.formatListToInsert(data, listId);
     await db.insertNewList(formattedData);
   }
+
+  async getShopPricesByDate() {
+    const data = await db.getShopPricesByDate();
+    console.log(data);
+    const formattedData = dataFormatter.formatShopPricesByDate(data);
+    return formattedData;
+  }
 }
 
 const ds = new DatabaseService();

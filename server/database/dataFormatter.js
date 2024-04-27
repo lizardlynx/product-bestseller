@@ -457,6 +457,16 @@ class DataFormatter {
     data.products.forEach(id => res.push(listId, id, data.title));
     return res;
   }
+
+  formatShopPricesByDate(data) {
+    const formattedData = {};
+    for (const row of data) {
+      if (!(row.shop_id in formattedData)) formattedData[row.shop_id] = {name: this.#shopsIds[row.shop_id].title, dates: [], data: []};
+      formattedData[row.shop_id].dates.push(row.sumdate);
+      formattedData[row.shop_id].data.push([Date.parse(row.sumdate), +row.sum]);
+    }
+    return formattedData;
+  }
 }
 
 const df = new DataFormatter();
