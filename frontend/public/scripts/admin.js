@@ -25,14 +25,14 @@ async function loadProducts() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  document
-    .getElementById('auchan')
-    .addEventListener('click', () => loadShopData('auchan'));
-  document
-    .getElementById('silpo')
-    .addEventListener('click', () => loadShopData('silpo'));
-  document
-    .getElementById('all')
-    .addEventListener('click', () => loadShopData('all'));
+  // document
+  //   .getElementById('auchan')
+  //   .addEventListener('click', () => loadShopData('auchan'));
+  // document
+  //   .getElementById('silpo')
+  //   .addEventListener('click', () => loadShopData('silpo'));
+  // document
+  //   .getElementById('all')
+  //   .addEventListener('click', () => loadShopData('all'));
   document.getElementById('products').addEventListener('click', loadProducts);
 });

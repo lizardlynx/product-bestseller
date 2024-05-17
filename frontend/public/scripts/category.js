@@ -12,10 +12,7 @@ function createProductHTML(product) {
   productDiv.setAttribute('data-id', product.id);
   productDiv.innerHTML = `<img src="${product.image}" width="200px" alt="${product.title}">
   <a class="title" href="/products/${product.id}">${product.title}</a>`;
-  for (const price of product.prices) {
-    if (price.comment != 'price' && price.comment != 'oldPrice') continue;
-    productDiv.innerHTML += `<div class="price ${price.comment}">${price.price}</div>`;
-  }
+  productDiv.innerHTML += `<div>від<div class="price">${product.price} грн</div></div>`;
 
   let shopHTML = '';
   shopHTML += '<div class="shop-name">';

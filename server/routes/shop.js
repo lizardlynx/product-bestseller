@@ -7,8 +7,13 @@ const shop = (fastify, _, done) => {
     reply.type('text/html').send(JSON.stringify(shops));
   });
 
-  fastify.get('/shops/analysis', async function (req, reply) {
+  fastify.get('/shops/analysis/full', async function (req, reply) {
     const data = await databaseService.getShopPricesByDate();
+    reply.type('text/html').send(JSON.stringify(data));
+  });
+
+  fastify.get('/shops/analysis/avg', async function (req, reply) {
+    const data = await databaseService.getShopAvgPricesByDate();
     reply.type('text/html').send(JSON.stringify(data));
   });
 

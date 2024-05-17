@@ -34,8 +34,18 @@
   <div id="header-holder"></div>
   <div class="wrapper">
     <h1>Аналіз магазинів</h2>
-    <p>* Порівняння цін на продукти, що існують в усіх магазинах</p>
-    <div id="chart-compare-shop-prices"></div>
+    <p>* Порівняння цін на продукти, що існують в обох магазинах</p>
+    <div class="tab-buttons">
+      <button class="tab-opener-button" data-ref="chart-1">Загальна різниця цін</button>
+      <button class="tab-opener-button" data-ref="chart-2">Середня різниця цін</button>
+    </div>
+    <div id="chart-1" class="tab-holder hidden">
+      <div id="chart-compare-shop-prices"></div>
+    </div>
+    <div id="chart-2" class="tab-holder hidden">
+      <div id="chart-compare-shop-avg-diff"></div>
+    </div>
+    
   </div>
 </body>
 </html>

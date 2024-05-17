@@ -100,15 +100,6 @@ class Database {
         offset,
       [...id]
     );
-    console.log(
-      queries.getProductsByCategory +
-        questionMarkString +
-        queries.getProductsByCategoryGroupBy +
-        ' limit ' +
-        itemsOnPage +
-        ' offset ' +
-        offset
-    );
     if (products.length == 0) return [[], [], [], productCount];
     const productIds = products.map((product) => product.id);
     const questionMarkStringProducts =
@@ -382,11 +373,20 @@ class Database {
 
   async getShopPricesByDate() {
     this.#createConnection();
-    const [data, field] = await this.#connection.query(
+    const [shopPricesByDate, field] = await this.#connection.query(
       queries.getShopPricesByDate
     );
     this.#connection.release();
-    return data;
+    return shopPricesByDate;
+  }
+
+  async getShopAvgPricesByDate() {
+    this.#createConnection();
+    const [averageDifferenceByDate, field2] = await this.#connection.query(
+      queries.selectAvgDiffByShopDate
+    );
+    this.#connection.release();
+    return averageDifferenceByDate;
   }
 }
 

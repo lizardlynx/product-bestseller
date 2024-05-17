@@ -63,9 +63,14 @@ module.exports = {
     on p.id = c.parent_category_id
   )
   select * from cte`,
-  getPricesOfProducts: `select p1.product_id, p1.shop_id, p1.comment, max(p1.date) as date, p1.price from prices p1
-    where p1.comment = 'price' and p1.product_id in `,
-  getPricesOfProductsGroupBy: `group by p1.product_id, p1.shop_id, p1.comment, p1.price order by date`,
+  getPricesOfProducts: `select b.product_id, MIN(b.price) price from prices b
+    inner join (
+      select p1.product_id, p1.shop_id, p1.comment, max(DATE(p1.date)) as date from prices p1
+      where p1.comment = 'price' and p1.product_id in`,
+  getPricesOfProductsGroupBy: `group by p1.product_id, p1.shop_id, p1.comment) a
+    on b.product_id = a.product_id
+    where b.shop_id=a.shop_id and b.comment=a.comment and DATE(b.date)=a.date
+    group by b.product_id`,
   getProduct: 'select * from products where id=?',
   getPricesByProduct: `select a.comment, a.shop_id, a.date, b.price from 
     (select distinct comment, product_id, shop_id, max(date) as date
@@ -78,7 +83,7 @@ module.exports = {
   getFeaturesByProduct:
     'select shop_id, title, value from features where product_id = ?',
   getPricesData:
-    'select shop_id, date, price, comment from prices where product_id = ?',
+    'select shop_id, DATE_ADD(DATE(date), INTERVAL 3 HOUR) date, price, comment from prices where product_id = ?',
   getBrands: 'select * from brands',
   getCountry: 'select * from countries where title in ',
   checkExistingProductIds: `select f.value id, f.product_id, DATE(max(r.date)) <> CURDATE() update_needed from features f
@@ -101,34 +106,64 @@ module.exports = {
     on l.product_id = r.product_id
     where r.comment='price' and l.list_id=?
     group by  p.id, p.title, r.price, r.shop_id, l.title`,
-  getListPrices: `select sum(price) as price, DATE_SUB(DATE(date), INTERVAL 21 HOUR) as date, shop_id
+  getListPrices: `select sum(price) as price, DATE_ADD(DATE(date), INTERVAL 3 HOUR) as d, shop_id
     from prices
     where comment='price' and product_id in `,
-  getListPricesGroupBy: ` group by DATE_SUB(DATE(date), INTERVAL 21 HOUR), shop_id order by date `,
-  getListPricesByShop: `select p.price, DATE_SUB(DATE(p.date), INTERVAL 21 HOUR) as date, p.shop_id, p.product_id, a.title
+  getListPricesGroupBy: ` group by d, shop_id order by d `,
+  getListPricesByShop: `select p.price, DATE_ADD(DATE(p.date), INTERVAL 3 HOUR) as date, p.shop_id, p.product_id, a.title
     from prices p
     inner join products a
     on p.product_id = a.id
     where p.comment='price' and p.product_id in `,
   selectFreeListId: `select MAX(list_id) + 1 as id from lists`,
   insertNewList: `insert into lists(list_id, product_id, title) values `,
-  getShopPricesByDate: `select DATE(b.date) as sumdate, sum(b.price) as sum, b.shop_id from (
+  getShopPricesByDate: `select DATE_ADD(DATE(b.date), INTERVAL 3 HOUR) as sumdate, sum(b.price) as sum, b.shop_id from (
       select count(DATE(date))/(1 + DATEDIFF(max(DATE(date)),min(DATE(date)))) expr, product_id as id from prices 
       where comment='price' and 
       product_id in (select b.product_id from (select p.id as product_id, p.title, count(distinct f.shop_id) res 
         from products p
         inner join features f
         on p.id=f.product_id
-        where p.category_id=420
+        where f.title = 'instock' and f.value='1'
         group by p.id, p.title
         having res=2) b) 
       group by product_id
       having expr = 2) a
     inner join prices b
     on a.id = b.product_id
-    where b.comment='price'
-    group by sumdate, shop_id`,
+    where b.comment='price' and b.price<>99999
+    group by sumdate, shop_id
+    order by sumdate asc, shop_id desc`,
+  selectAvgDiffByShopDate: `select AVG(diff) diff, DATE_ADD(d, INTERVAL 3 HOUR) date from (
+    select (p1.price - p2.price) diff, p1.d, p1.product_id
+    from (
+      select p.product_id, p.price, p.shop_id, DATE(p.date) d from prices p
+      inner join (select b.product_id from (select p.id as product_id, p.title, count(distinct f.shop_id) res 
+        from products p
+        inner join features f
+        on p.id=f.product_id
+        where f.title = 'instock' and f.value='1'
+        group by p.id, p.title
+        having res=2) b) a
+      on p.product_id=a.product_id
+      where p.comment='price' and p.shop_id=2) p1
+    inner join (
+      select p.product_id, p.price, p.shop_id, DATE(p.date) d from prices p
+      inner join (select b.product_id from (select p.id as product_id, p.title, count(distinct f.shop_id) res 
+        from products p
+        inner join features f
+        on p.id=f.product_id
+        where f.title = 'instock' and f.value='1'
+        group by p.id, p.title
+        having res=2) b) a
+      on p.product_id=a.product_id
+      where p.comment='price' and p.shop_id=1 and p.price<>99999) p2
+    on p1.product_id=p2.product_id
+    where p1.d = p2.d
+    ) a
+    group by date`,
   recreateDbQuery: `
+      drop table if exists lists;
       drop table if exists shop_categories_match;
       drop table if exists features;
       drop table if exists prices;
@@ -198,6 +233,12 @@ module.exports = {
           primary key(id),
           foreign key(db_id) references categories(id),
           foreign key(shop_id) references shops(id)
+      );
+
+      create table lists(
+        list_id int ,
+          product_id int,
+          title varchar(500)
       );
       
       insert into shops(title, product_url) values('auchan', 'https://auchan.ua/ua/'),('silpo','https://shop.silpo.ua/product/');

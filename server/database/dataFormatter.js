@@ -163,13 +163,13 @@ class DataFormatter {
       if (!(product.id in productsFormatted)) {
         productsFormatted[product.id] = product;
         productsFormatted[product.id].features = [];
-        productsFormatted[product.id].prices = [];
+        productsFormatted[product.id].price = null;
         productsFormatted[product.id].shops = [];
       }
     }
 
     for (const price of prices) {
-      productsFormatted[price.product_id].prices.push(price);
+      productsFormatted[price.product_id].price = price.price;
     }
 
     for (const feature of features) {
@@ -421,8 +421,8 @@ class DataFormatter {
       const shop = row.shop_id;
       const shopName = this.#shopsIds[shop.toString()].title;
       if (!(shopName in pricesFormatted)) pricesFormatted[shopName] = {name: shopName, dates: [], data: []};
-      pricesFormatted[shopName].dates.push(row.date);
-      pricesFormatted[shopName].data.push([Date.parse(row.date), +row.price]);
+      pricesFormatted[shopName].dates.push(row.d);
+      pricesFormatted[shopName].data.push([Date.parse(row.d), +row.price]);
       if(!shopKeys.includes(shop)) shopKeys.push(shop);
     } 
     return { data: Object.values(pricesFormatted), keys: shopKeys };
@@ -430,7 +430,6 @@ class DataFormatter {
 
   formatListPricesByShop(data) {
     const pricesByShop = {};
-    console.log(data);
     for (const row of data) {
       if (!(row.shop_id in pricesByShop)) pricesByShop[row.shop_id] = {};
       if (!(row.product_id in pricesByShop[row.shop_id])) pricesByShop[row.shop_id][row.product_id] = {name: row.title, dates: [], data: []};
@@ -459,13 +458,28 @@ class DataFormatter {
   }
 
   formatShopPricesByDate(data) {
-    const formattedData = {};
+    const formattedData = {name: 'Різниця ціни Сільпо і Ашану', dates: [], data: []};
+    let diff = null;
     for (const row of data) {
-      if (!(row.shop_id in formattedData)) formattedData[row.shop_id] = {name: this.#shopsIds[row.shop_id].title, dates: [], data: []};
-      formattedData[row.shop_id].dates.push(row.sumdate);
-      formattedData[row.shop_id].data.push([Date.parse(row.sumdate), +row.sum]);
+      if (diff == null) {
+        diff = +row.sum;
+        continue;
+      } 
+      diff -= +row.sum;
+      formattedData.dates.push(row.sumdate);
+      formattedData.data.push([Date.parse(row.sumdate), diff]);
+      diff = null;
     }
     return formattedData;
+  }
+
+  formatAvgDiff(data) {
+    const formattedData = {name: 'Різниця ціни Сільпо і Ашану', dates: [], data: []};
+    for (const row of data) {
+      formattedData.dates.push(row.date);
+      formattedData.data.push([Date.parse(row.date), +row.diff]);
+    }
+    return formattedData
   }
 }
 

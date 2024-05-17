@@ -200,10 +200,15 @@ class DatabaseService {
   }
 
   async getShopPricesByDate() {
-    const data = await db.getShopPricesByDate();
-    console.log(data);
-    const formattedData = dataFormatter.formatShopPricesByDate(data);
+    const shopPricesByDate = await db.getShopPricesByDate();;
+    const formattedData = dataFormatter.formatShopPricesByDate(shopPricesByDate);
     return formattedData;
+  }
+
+  async getShopAvgPricesByDate() {
+    const averageDifferenceByDate = await db.getShopAvgPricesByDate();
+    const formattedAvgDiff = dataFormatter.formatAvgDiff(averageDifferenceByDate);
+    return formattedAvgDiff;
   }
 }
 

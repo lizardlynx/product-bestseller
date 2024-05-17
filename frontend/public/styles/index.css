@@ -91,7 +91,6 @@ footer {
 }
 
 .category:has(.category-children.filled) {
-  background-image: url(/images/arrow-right.png);
   background-repeat: no-repeat;
   background-position-x: 95%;
   background-size: 25px;

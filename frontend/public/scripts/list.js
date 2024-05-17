@@ -79,8 +79,6 @@ function recount(resJSON, type) {
     tbody.innerHTML += productTr;
   }
 
-  console.log(shopProductExists);
-
   let resTr = '';
   let minPrice = Infinity;
   let minShop = '-';
