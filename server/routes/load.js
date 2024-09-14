@@ -55,7 +55,7 @@ const load = (fastify, _, done) => {
   fastify.post('/products/all', async function (req, reply) {
     const shopIds = await databaseService.getCategoriesIds();
 
-    const { idsSilpo, idsAuchan } = shopIds.reduce(
+    (async () => {const { idsSilpo, idsAuchan } = shopIds.reduce(
       (acc, shopData) => {
         if (!shopData.db_id == 1) return acc;
         const shop = shopData.shop_id == 1 ? 'idsAuchan' : 'idsSilpo';
@@ -105,7 +105,7 @@ const load = (fastify, _, done) => {
     endA = Date.now();
     console.log(
       `Execution time full download products Silpo: ${endA - startA} ms`
-    );
+    );})()
 
     reply.status(204).send();
   });
