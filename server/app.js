@@ -21,7 +21,7 @@ const build = (opts = {}) => {
 
   app.register(fastifyMysql, {
     promise: true,
-    connectionString: `mysql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}/${process.env.DB_NAME}`,
+    connectionString: `mysql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`,
   });
 
   app.register(product);

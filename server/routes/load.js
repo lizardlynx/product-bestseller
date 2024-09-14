@@ -5,7 +5,6 @@ const databaseService = require('../database/databaseService.js');
 const { processError } = require('../common.js');
 
 const load = (fastify, _, done) => {
-  //done
   fastify.post('/categories/auchan', async function (req, reply) {
     await databaseService.recreateDatabase();
     const data = await auchanApi.loadCategories();
@@ -14,7 +13,6 @@ const load = (fastify, _, done) => {
     reply.status(204).send();
   });
 
-  //done
   fastify.post('/categories/silpo', async function (req, reply) {
     await databaseService.recreateDatabase();
     const data = await silpoApi.loadCategories();
