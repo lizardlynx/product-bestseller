@@ -16,7 +16,7 @@ async function loadShopData(shopName) {
 
 async function loadProducts() {
   const res = await fetch('/products/all', {
-    method: 'POST',
+    method: 'GET',
   });
   if (!res.ok) return initError(await res.text());
 

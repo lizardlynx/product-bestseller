@@ -52,7 +52,7 @@ const load = (fastify, _, done) => {
     reply.status(204).send();
   });
 
-  fastify.post('/products/all', async function (req, reply) {
+  fastify.get('/products/all', async function (req, reply) {
     const shopIds = await databaseService.getCategoriesIds();
 
     (async () => {const { idsSilpo, idsAuchan } = shopIds.reduce(
