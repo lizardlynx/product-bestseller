@@ -7,7 +7,7 @@ const path = require('path');
 const category = (fastify, _, done) => {
   fastify.get('/categories/:id', async function (req, reply) {
     const stream = fs.createReadStream(
-      path.join(process.env.ROOT, 'frontend', 'views', 'category.html'),
+      path.join(process.cwd(), 'frontend', 'views', 'category.html'),
       { encoding: 'utf8' }
     );
     const res = await logChunks(stream);

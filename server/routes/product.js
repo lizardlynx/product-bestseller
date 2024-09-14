@@ -7,7 +7,7 @@ const path = require('path');
 const product = (fastify, _, done) => {
   fastify.get('/products/:id', async function (req, reply) {
     const stream = fs.createReadStream(
-      path.join(process.env.ROOT, 'frontend', 'views', 'product.html'),
+      path.join(process.cwd(), 'frontend', 'views', 'product.html'),
       { encoding: 'utf8' }
     );
     const res = await logChunks(stream);

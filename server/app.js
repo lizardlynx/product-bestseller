@@ -11,12 +11,13 @@ const category = require('./routes/category.js');
 const load = require('./routes/load.js');
 const shop = require('./routes/shop.js');
 const list = require('./routes/list.js');
+const { log } = require('console');
 
 const build = (opts = {}) => {
   const app = fastify(opts);
 
   app.register(fastifyStatic, {
-    root: process.env.ROOT + 'frontend/public',
+    root: process.cwd() + '/frontend/public',
   });
 
   app.register(fastifyMysql, {
@@ -37,7 +38,7 @@ const build = (opts = {}) => {
 
   app.get('/', (req, reply) => {
     const stream = fs.createReadStream(
-      process.env.ROOT + 'frontend/views/index.html'
+      process.cwd() + '/frontend/views/index.html'
     );
     reply.type('text/html').send(stream);
   });
