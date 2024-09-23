@@ -1,28 +1,28 @@
 'use strict';
 const auchanApi = require('../apiClasses/auchanApi.js');
 const silpoApi = require('../apiClasses/silpoApi.js');
-const databaseService = require('../database/databaseService.js');
+const mainService = require('../services/mainService.js');
 const { processError } = require('../common.js');
 
 const load = (fastify, _, done) => {
   fastify.post('/categories/auchan', async function (req, reply) {
-    await databaseService.recreateDatabase();
+    await mainService.recreateDatabase();
     const data = await auchanApi.loadCategories();
     if (data.error) return processError(data.error, reply);
-    await databaseService.addCategories(data.data, 'auchan');
+    await mainService.addCategories(data.data, 'auchan');
     reply.status(204).send();
   });
 
   fastify.post('/categories/silpo', async function (req, reply) {
-    await databaseService.recreateDatabase();
+    await mainService.recreateDatabase();
     const data = await silpoApi.loadCategories();
     if (data.error) return processError(data.error, reply);
-    await databaseService.addCategories(data.data, 'silpo');
+    await mainService.addCategories(data.data, 'silpo');
     reply.status(204).send();
   });
 
   fastify.post('/categories/all', async function (req, reply) {
-    await databaseService.recreateDatabase();
+    await mainService.recreateDatabase();
 
     let startTime = Date.now();
     const silpoRes = await silpoApi.loadCategories();
@@ -37,14 +37,14 @@ const load = (fastify, _, done) => {
     console.log(`Execution time AuchanApi: ${endTime - startTime} ms`);
 
     startTime = Date.now();
-    await databaseService.addCategories(silpoRes.data, 'silpo');
+    await mainService.addCategories(silpoRes.data, 'silpo');
     endTime = Date.now();
     console.log(
       `Execution time add categories Silpo: ${endTime - startTime} ms`
     );
 
     startTime = Date.now();
-    await databaseService.addCategories(auchanRes.data, 'auchan');
+    await mainService.addCategories(auchanRes.data, 'auchan');
     endTime = Date.now();
     console.log(
       `Execution time add categories Auchan: ${endTime - startTime} ms`
@@ -53,59 +53,61 @@ const load = (fastify, _, done) => {
   });
 
   fastify.get('/products/all', async function (req, reply) {
-    const shopIds = await databaseService.getCategoriesIds();
+    const shopIds = await mainService.getCategoriesIds();
 
-    (async () => {const { idsSilpo, idsAuchan } = shopIds.reduce(
-      (acc, shopData) => {
-        if (!shopData.db_id == 1) return acc;
-        const shop = shopData.shop_id == 1 ? 'idsAuchan' : 'idsSilpo';
-        acc[shop].push([shopData.shop_category_id, shopData.db_id]);
-        return acc;
-      },
-      { idsSilpo: [], idsAuchan: [] }
-    );
+    (async () => {
+      const { idsSilpo, idsAuchan } = shopIds.reduce(
+        (acc, shopData) => {
+          if (!shopData.db_id == 1) return acc;
+          const shop = shopData.shop_id == 1 ? 'idsAuchan' : 'idsSilpo';
+          acc[shop].push([shopData.shop_category_id, shopData.db_id]);
+          return acc;
+        },
+        { idsSilpo: [], idsAuchan: [] }
+      );
 
-    // need to load in chunks
-    console.log(idsAuchan);
-    let data = {};
-    let startA = Date.now();
-    for (const ids of idsAuchan) {
-      data = {};
-      console.log(ids);
-      const [initialId, dbId] = ids; //[5346, 12];//ids;
-      // if (initialId != 5346) continue;
-      while (!('finished' in data)) {
-        data = await auchanApi.loadProductsByCategory([initialId]);
-        if (data.error) return processError(data.error, reply);
-        if (!data.data.search) {
-          console.log('here search was null');
-          continue;
+      // need to load in chunks
+      console.log(idsAuchan);
+      let data = {};
+      let startA = Date.now();
+      for (const ids of idsAuchan) {
+        data = {};
+        console.log(ids);
+        const [initialId, dbId] = ids; //[5346, 12];//ids;
+        // if (initialId != 5346) continue;
+        while (!('finished' in data)) {
+          data = await auchanApi.loadProductsByCategory([initialId]);
+          if (data.error) return processError(data.error, reply);
+          if (!data.data.search) {
+            console.log('here search was null');
+            continue;
+          }
+          mainService.addAuchanProductsToQuery(data.data, dbId);
         }
-        databaseService.addAuchanProductsToQuery(data.data, dbId);
+        await mainService.insertProductsData();
       }
-      await databaseService.insertProductsData();
-    }
-    let endA = Date.now();
-    console.log(
-      `Execution time full download products Auchan: ${endA - startA} ms`
-    );
+      let endA = Date.now();
+      console.log(
+        `Execution time full download products Auchan: ${endA - startA} ms`
+      );
 
-    console.log(idsSilpo);
-    startA = Date.now();
-    for (const ids of idsSilpo) {
-      data = {};
-      const [initialId, dbId] = ids;
-      while (!('finished' in data)) {
-        data = await silpoApi.loadProductsByCategory(initialId);
-        if (data.error) return processError(data.error, reply);
-        databaseService.addSilpoProductsToQuery(data.data, dbId);
+      console.log(idsSilpo);
+      startA = Date.now();
+      for (const ids of idsSilpo) {
+        data = {};
+        const [initialId, dbId] = ids;
+        while (!('finished' in data)) {
+          data = await silpoApi.loadProductsByCategory(initialId);
+          if (data.error) return processError(data.error, reply);
+          mainService.addSilpoProductsToQuery(data.data, dbId);
+        }
+        await mainService.insertProductsData();
       }
-      await databaseService.insertProductsData();
-    }
-    endA = Date.now();
-    console.log(
-      `Execution time full download products Silpo: ${endA - startA} ms`
-    );})()
+      endA = Date.now();
+      console.log(
+        `Execution time full download products Silpo: ${endA - startA} ms`
+      );
+    })();
 
     reply.status(204).send();
   });

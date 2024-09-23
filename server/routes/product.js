@@ -1,7 +1,8 @@
 'use strict';
 const fs = require('fs');
 const { logChunks } = require('../common.js');
-const databaseService = require('../database/databaseService.js');
+const mainService = require('../services/mainService.js');
+const predictionService = require('../services/predictions.js');
 const path = require('path');
 
 const product = (fastify, _, done) => {
@@ -16,21 +17,29 @@ const product = (fastify, _, done) => {
 
   fastify.get('/products/:id/data', async function (req, reply) {
     const { id } = req.params;
-    const productFormatted = await databaseService.getProductData(id);
+    const productFormatted = await mainService.getProductData(id);
     if (!productFormatted) return reply.status(404).send('Product not found');
     reply.type('text/html').send(JSON.stringify(productFormatted));
   });
 
   fastify.get('/products/:id/prices', async function (req, reply) {
     const { id } = req.params;
-    const prices = await databaseService.getPricesData(id);
+    const prices = await mainService.getPricesData(id);
     reply.type('text/html').send(JSON.stringify(prices));
   });
 
   fastify.get('/products', async function (req, reply) {
     const { name } = req.query;
-    const products = await databaseService.getProductsByName(name);
+    const products = await mainService.getProductsByName(name);
     reply.type('text/html').send(JSON.stringify(products));
+  });
+
+  fastify.get('/products/:id/sma', async function (req, reply) {
+    const { id } = req.params;
+    const { dateStart, dateEnd } = req.query;
+    const prices = await mainService.getPricesData(id, {dateStart, dateEnd});
+    const result = await predictionService.sma(prices);
+    reply.type('text/html').send(JSON.stringify(result));
   });
 
   done();

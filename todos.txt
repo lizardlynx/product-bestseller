@@ -13,3 +13,6 @@
 
 + handle rest api status codes not ok (like in product.js file)
 + check if chart compare prices works and fix data, transfered to it
+
+- add usage of artificial intelligence to connect products
+- add price prediction!! (need data)

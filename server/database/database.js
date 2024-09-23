@@ -45,6 +45,15 @@ class Database {
     return rows;
   }
 
+  async getPricesDataByDates(id) {
+    await this.#createConnection();
+    const [rows, fields] = await this.#connection.query(queries.getPricesDataByDates, [
+      id,
+    ]);
+    this.#connection.release();
+    return rows;
+  }
+
   async getCategoriesIds() {
     await this.#createConnection();
     const [rowsAll, fieldsAll] = await this.#connection.query(

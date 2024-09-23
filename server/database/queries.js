@@ -84,6 +84,7 @@ module.exports = {
     'select shop_id, title, value from features where product_id = ?',
   getPricesData:
     'select shop_id, DATE_ADD(DATE(date), INTERVAL 3 HOUR) date, price, comment from prices where product_id = ?',
+  getPricesDataByDates: 'select shop_id, DATE_ADD(DATE(date), INTERVAL 3 HOUR) date, price, comment from prices where product_id = ? and (date between ? and ?)',
   getBrands: 'select * from brands',
   getCountry: 'select * from countries where title in ',
   checkExistingProductIds: `select f.value id, f.product_id, DATE(max(r.date)) <> CURDATE() update_needed from features f

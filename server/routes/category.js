@@ -1,6 +1,6 @@
 'use strict';
 const fs = require('fs');
-const databaseService = require('../database/databaseService.js');
+const mainService = require('../services/mainService.js');
 const { logChunks } = require('../common.js');
 const path = require('path');
 
@@ -15,14 +15,14 @@ const category = (fastify, _, done) => {
   });
 
   fastify.get('/categories', async function (req, reply) {
-    const res = await databaseService.getAllCategories();
+    const res = await mainService.getAllCategories();
     reply.type('application/json').send(res);
   });
 
   fastify.get('/categories/:id/products', async function (req, reply) {
     const { id } = req.params;
     const { page: pageNumber, items: itemsCount } = req.query;
-    const products = await databaseService.getProductsByCategory(id, pageNumber, itemsCount);
+    const products = await mainService.getProductsByCategory(id, pageNumber, itemsCount);
     if (products.error) return reply.status(products.code).send(products.error);
     reply.type('text/html').send(JSON.stringify(products));
   });

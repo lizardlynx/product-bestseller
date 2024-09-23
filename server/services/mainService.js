@@ -1,9 +1,9 @@
 'use strict';
 const Fuse = require('fuse.js');
-const dataFormatter = require('./dataFormatter.js');
-const db = require('./database.js');
+const dataFormatter = require('../database/dataFormatter.js');
+const db = require('../database/database.js');
 
-class DatabaseService {
+class MainService {
   #fuseOptions = {
     includeScore: true,
     threshold: 0.3,
@@ -36,6 +36,12 @@ class DatabaseService {
 
   async getPricesData(product) {
     const data = await db.getPricesData(product);
+    const formattedData = dataFormatter.formatPricesData(data);
+    return formattedData;
+  }
+
+  async getPricesDataByDates(product, dates = {}) {
+    const data = await db.getPricesDataByDates(product, dates);
     const formattedData = dataFormatter.formatPricesData(data);
     return formattedData;
   }
@@ -212,6 +218,4 @@ class DatabaseService {
   }
 }
 
-const ds = new DatabaseService();
-
-module.exports = ds;
+module.exports = new MainService();
