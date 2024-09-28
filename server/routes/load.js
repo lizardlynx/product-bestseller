@@ -3,11 +3,25 @@ const auchanApi = require('../apiClasses/auchanApi.js');
 const silpoApi = require('../apiClasses/silpoApi.js');
 const mainService = require('../services/mainService.js');
 const { processError } = require('../common.js');
+const SilpoApi = require('../apiClasses/silpoApi.js');
+const AuchanApi = require('../apiClasses/auchanApi.js');
+
+async function promiseAllSettledRecordTimings(promises) {
+  const startTime = new Date().getTime();
+  const timings = [];
+  promises.forEach((prom, ix) => {
+    prom.then(() => {
+      timings[ix] = new Date().getTime() - startTime;
+    });
+  });
+  const result = await Promise.allSettled(promises);
+  return { result, timings };
+}
 
 const load = (fastify, _, done) => {
   fastify.post('/categories/auchan', async function (req, reply) {
     await mainService.recreateDatabase();
-    const data = await auchanApi.loadCategories();
+    const data = await new AuchanApi().loadCategories();
     if (data.error) return processError(data.error, reply);
     await mainService.addCategories(data.data, 'auchan');
     reply.status(204).send();
@@ -15,7 +29,7 @@ const load = (fastify, _, done) => {
 
   fastify.post('/categories/silpo', async function (req, reply) {
     await mainService.recreateDatabase();
-    const data = await silpoApi.loadCategories();
+    const data = await new SilpoApi().loadCategories();
     if (data.error) return processError(data.error, reply);
     await mainService.addCategories(data.data, 'silpo');
     reply.status(204).send();
@@ -24,30 +38,29 @@ const load = (fastify, _, done) => {
   fastify.post('/categories/all', async function (req, reply) {
     await mainService.recreateDatabase();
 
-    let startTime = Date.now();
-    const silpoRes = await silpoApi.loadCategories();
-    if (silpoRes.error) return processError(silpoRes.error, reply);
-    let endTime = Date.now();
-    console.log(`Execution time SilpoApi: ${endTime - startTime} ms`);
-
-    startTime = Date.now();
-    const auchanRes = await auchanApi.loadCategories();
-    if (auchanRes.error) return processError(auchanRes.error, reply);
-    endTime = Date.now();
-    console.log(`Execution time AuchanApi: ${endTime - startTime} ms`);
-
-    startTime = Date.now();
-    await mainService.addCategories(silpoRes.data, 'silpo');
-    endTime = Date.now();
+    const {
+      timings,
+      result: [{ value: silpoRes }, { value: auchanRes }],
+    } = await promiseAllSettledRecordTimings([
+      new SilpoApi().loadCategories(),
+      new AuchanApi().loadCategories(),
+    ]);
     console.log(
-      `Execution time add categories Silpo: ${endTime - startTime} ms`
+      `Execution time full download categories: Auchan: ${timings[0]} ms; Silpo: ${timings[1]} ms`
     );
 
-    startTime = Date.now();
-    await mainService.addCategories(auchanRes.data, 'auchan');
-    endTime = Date.now();
+    if (auchanRes.error) return processError(auchanRes.error, reply);
+    if (silpoRes.error) return processError(silpoRes.error, reply);
+
+    const { timings: timings0 } = await promiseAllSettledRecordTimings([
+      mainService.addCategories(auchanRes.data, 'auchan'),
+    ]);
+    const { timings: timings1 } = await promiseAllSettledRecordTimings([
+      mainService.addCategories(silpoRes.data.data, 'silpo'),
+    ]);
+
     console.log(
-      `Execution time add categories Auchan: ${endTime - startTime} ms`
+      `Execution time add categories to db: Auchan: ${timings0[0]} ms; Silpo: ${timings1[0]} ms`
     );
     reply.status(204).send();
   });
@@ -66,15 +79,27 @@ const load = (fastify, _, done) => {
         { idsSilpo: [], idsAuchan: [] }
       );
 
-      // need to load in chunks
-      console.log(idsAuchan);
-      let data = {};
-      let startA = Date.now();
-      for (const ids of idsAuchan) {
-        data = {};
-        console.log(ids);
+      const silpoPromises = idsSilpo.map(async (ids) => {
+        let data = {};
+        const insertProductsFormatter = mainService.getInsertProductsFormatter();
+        const [initialId, dbId] = ids;
+        const silpoApi = new SilpoApi()
+        while (!('finished' in data)) {
+          console.log('loop');
+          data = await silpoApi.loadProductsByCategory(initialId);
+          if (data.error) return processError(data.error, reply);
+          mainService.addSilpoProductsToQuery(data.data, dbId, insertProductsFormatter);
+        }
+        console.log('silpo inserting...');
+        await mainService.insertProductsData(insertProductsFormatter);
+        console.log('silpo inserted');
+      });
+      const auchanPromises = idsAuchan.map(async (ids) => {
+        let data = {};
+        const insertProductsFormatter = mainService.getInsertProductsFormatter();
         const [initialId, dbId] = ids; //[5346, 12];//ids;
         // if (initialId != 5346) continue;
+        const auchanApi = new AuchanApi()
         while (!('finished' in data)) {
           data = await auchanApi.loadProductsByCategory([initialId]);
           if (data.error) return processError(data.error, reply);
@@ -82,30 +107,22 @@ const load = (fastify, _, done) => {
             console.log('here search was null');
             continue;
           }
-          mainService.addAuchanProductsToQuery(data.data, dbId);
+          mainService.addAuchanProductsToQuery(data.data, dbId, insertProductsFormatter);
         }
-        await mainService.insertProductsData();
-      }
-      let endA = Date.now();
-      console.log(
-        `Execution time full download products Auchan: ${endA - startA} ms`
-      );
+        console.log('auchan inserting...');
+        await mainService.insertProductsData(insertProductsFormatter);
+        console.log('auchan inserted');
+      });
 
-      console.log(idsSilpo);
-      startA = Date.now();
-      for (const ids of idsSilpo) {
-        data = {};
-        const [initialId, dbId] = ids;
-        while (!('finished' in data)) {
-          data = await silpoApi.loadProductsByCategory(initialId);
-          if (data.error) return processError(data.error, reply);
-          mainService.addSilpoProductsToQuery(data.data, dbId);
-        }
-        await mainService.insertProductsData();
-      }
-      endA = Date.now();
+      console.log('idsSilpo', idsSilpo);
+      console.log('idsAuchan', idsAuchan);
+
+      const { timings } = await promiseAllSettledRecordTimings([
+        Promise.allSettled(silpoPromises),
+        Promise.allSettled(auchanPromises)
+      ]);
       console.log(
-        `Execution time full download products Silpo: ${endA - startA} ms`
+        `Execution time full download products: Auchan: ${timings[0]} ms; Silpo: ${timings[1]} ms`
       );
     })();
 

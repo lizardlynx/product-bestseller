@@ -7,15 +7,22 @@ class Database {
   #fastify;
 
   async #createConnection() {
-    this.#connection = await this.#fastify.mysql.getConnection();
+    console.log('waiting for connection');
+    this.#connection = await this.#fastify.mysql.pool.getConnection();
+    console.log('this.#connection received');
   }
 
   async getShopsIds(fastify) {
     this.#fastify = fastify;
     await this.#createConnection();
     const [shops, shopsFields] = await this.#connection.query(queries.getShops);
-    this.#connection.release();
+    // this.#releaseConnection();
     return shops;
+  }
+
+  async #releaseConnection() {
+    console.log('release connection');
+    this.#connection.release();
   }
 
   async recreateDatabase() {
@@ -26,13 +33,13 @@ class Database {
         await this.#connection.query(query);
       }
     }
-    this.#connection.release();
+    this.#releaseConnection();
   }
 
   async getAllCategories() {
     await this.#createConnection();
     const [rows, fields] = await this.#connection.query(queries.getCategories);
-    this.#connection.release();
+    this.#releaseConnection();
     return rows;
   }
 
@@ -41,7 +48,7 @@ class Database {
     const [rows, fields] = await this.#connection.query(queries.getPricesData, [
       id,
     ]);
-    this.#connection.release();
+    this.#releaseConnection();
     return rows;
   }
 
@@ -50,7 +57,7 @@ class Database {
     const [rows, fields] = await this.#connection.query(queries.getPricesDataByDates, [
       id,
     ]);
-    this.#connection.release();
+    this.#releaseConnection(); // cannot use just one connection!!!
     return rows;
   }
 
@@ -62,7 +69,7 @@ class Database {
     const [rows, fields] = await this.#connection.query(
       queries.getCategoriesIds
     );
-    this.#connection.release();
+    this.#releaseConnection();
     return [rows, rowsAll];
   }
 
@@ -73,7 +80,7 @@ class Database {
       [id]
     );
 
-    this.#connection.release();
+    this.#releaseConnection();
     return categories;
   }
 
@@ -87,7 +94,7 @@ class Database {
       queries.getCategoryHierarchy,
       [id]
     );
-    this.#connection.release();
+    this.#releaseConnection();
     return categories;
   }
 
@@ -124,7 +131,7 @@ class Database {
       [...productIds]
     );
 
-    this.#connection.release();
+    this.#releaseConnection();
     return [products, prices, features, productCount];
   }
 
@@ -143,7 +150,7 @@ class Database {
       [id]
     );
 
-    this.#connection.release();
+    this.#releaseConnection();
     return [products, prices, features];
   }
 
@@ -159,7 +166,7 @@ class Database {
 
     const categoryKeyWords = splitCategories(category);
     let categoryExistsId = null;
-    if (shopId != 2) {
+    // if (shopId != 2) {
       for (let item of categoryKeyWords) {
         let res = categoriesAddedTemp[item];
         if (!res) continue;
@@ -169,7 +176,7 @@ class Database {
           break;
         }
       }
-    }
+    // }
 
     if (category == 'Продукти харчування' && shopId == 1) {
       categoryExistsId = 1;
@@ -312,7 +319,7 @@ class Database {
     }
 
     await Promise.all(promiseArr);
-    this.#connection.release();
+    this.#releaseConnection();
   }
 
   async getProductsByName(name) {
@@ -328,7 +335,7 @@ class Database {
       queries.getShopIdsByProduct + this.#createQuestionMarkString(ids),
       ids
     );
-    this.#connection.release();
+    this.#releaseConnection();
     return {data, shopIds};
   }
 
@@ -337,7 +344,7 @@ class Database {
     const [data, field] = await this.#connection.query(
       queries.getAllLists
     );
-    this.#connection.release();
+    this.#releaseConnection();
     return data;
   }
 
@@ -346,7 +353,7 @@ class Database {
     const [data, field] = await this.#connection.query(
       queries.getListById, [id]
     );
-    this.#connection.release();
+    this.#releaseConnection();
     return data;
   }
 
@@ -358,7 +365,7 @@ class Database {
     const [dataByShop, field2] = await this.#connection.query(
       queries.getListPricesByShop + this.#createQuestionMarkString(allIds), allIds
     );
-    this.#connection.release();
+    this.#releaseConnection();
     return [data, dataByShop];
   }
 
@@ -367,7 +374,7 @@ class Database {
     const [data, field] = await this.#connection.query(
       queries.selectFreeListId,
     );
-    this.#connection.release();
+    this.#releaseConnection();
     return data[0].id;
   }
 
@@ -376,7 +383,7 @@ class Database {
     const [data, field] = await this.#connection.query(
       queries.insertNewList + this.#createQuestionMarkSet(list, 3), list
     );
-    this.#connection.release();
+    this.#releaseConnection();
     return data.id;
   }
 
@@ -385,7 +392,7 @@ class Database {
     const [shopPricesByDate, field] = await this.#connection.query(
       queries.getShopPricesByDate
     );
-    this.#connection.release();
+    this.#releaseConnection();
     return shopPricesByDate;
   }
 
@@ -394,7 +401,7 @@ class Database {
     const [averageDifferenceByDate, field2] = await this.#connection.query(
       queries.selectAvgDiffByShopDate
     );
-    this.#connection.release();
+    this.#releaseConnection();
     return averageDifferenceByDate;
   }
 }

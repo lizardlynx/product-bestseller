@@ -50,7 +50,7 @@ class SilpoApi extends BaseApi {
       this.#getProductByCategoryVariables
     );
     if (res.error) return res;
-    await delay(3000);
+    await delay(500);
     this.#getProductByCategoryItemsCount = res.data.data.itemsCount;
     this.#getProductByCategoryVariables.data.From += pageSize;
     this.#getProductByCategoryVariables.data.To += pageSize;
@@ -82,6 +82,4 @@ class SilpoApi extends BaseApi {
     return await this.#processSilpoRequest(this.#silpoApiLink, variables);
   }
 }
-
-const silpoApi = new SilpoApi();
-module.exports = silpoApi;
+module.exports = SilpoApi;

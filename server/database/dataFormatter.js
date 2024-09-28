@@ -1,99 +1,7 @@
 'use strict';
-const {
-  datetime,
-  firstToUpper,
-  resolveWeight,
-  resolveCountry,
-  resolveBrand,
-  resolveFeatureName,
-  resolveFeatureValue,
-  splitCategories,
-  cleanArray,
-} = require('../common.js');
+const shopsFormatter = require('../dataFormatters/shopsFormatter.js');
 
 class DataFormatter {
-  #connection = null;
-  #insertFeatureData = [];
-  #insertPriceData = [];
-  #categoriesAddedTemp = {};
-  #insertProductData = [];
-  #shopsIds = {};
-  #productIds = [];
-  #insertShop = null;
-  #idProductMatch = {};
-  #categoriesObj = {};
-  #categoriesToInsert = {};
-  #shopConfig = {
-    auchan: {
-      formatCategories: (param) => this.#formatCategoriesAuchan(param),
-    },
-    silpo: {
-      formatCategories: (param) => this.#formatCategoriesSilpo(param),
-    },
-  };
-
-  constructor() {}
-
-  processShopsIds(shops) {
-    for (let shop of shops) {
-      this.#shopConfig[shop.title].dbId = shop.id;
-      this.#shopsIds[shop.id] = {
-        title: firstToUpper(shop.title),
-        product_url: shop.product_url,
-      };
-    }
-  }
-
-  formatCategories(data, shopTitle) {
-    const shopFormatFunctions = this.#shopConfig[shopTitle];
-    if (shopFormatFunctions) return shopFormatFunctions.formatCategories(data);
-    return { success: 0, message: `Shop "${shopTitle}" cannot be processed.` };
-  }
-
-  getShops() {
-    return this.#shopsIds;
-  }
-
-  async #getCategoriesAuchan(currentCategory) {
-    const shopId = this.#shopConfig.auchan.dbId;
-    const stack = [];
-    const categories = [];
-    let category = currentCategory;
-    let parentId = null;
-
-    category.parentId = parentId;
-    stack.push(category);
-    categories.push(category);
-    while (stack.length != 0) {
-      category = stack.pop();
-      if (!('visited' in category)) {
-        const path = category.path.split('/');
-        parentId = path[path.length - 2];
-        category.visited = true;
-        category.parentId = parentId;
-        categories.push(category);
-        if (category.children_count == 0) continue;
-        for (let child of category.children) {
-          stack.push(child);
-        }
-      }
-    }
-    categories[0].parentId = null;
-
-    return [categories, shopId, this.#categoriesAddedTemp];
-  }
-
-  #formatCategoriesAuchan(data) {
-    const currentCategory = data.category;
-    return this.#getCategoriesAuchan(currentCategory);
-  }
-
-  async #formatCategoriesSilpo(data) {
-    const currentCategories = data.data.tree;
-    const shopId = this.#shopConfig.silpo.dbId;
-    return [currentCategories, shopId, this.#categoriesAddedTemp];
-  }
-
   formatPricesData(rows) {
     const pricesFormatted = {};
     for (const row of rows) {
@@ -119,24 +27,6 @@ class DataFormatter {
       pricesFormatted[shop] = data;
     }
     return pricesFormatted;
-  }
-
-  cacheCategoriesIds(rowsAll) {
-    rowsAll.forEach((category) => {
-      if (!(category.shop_id in this.#categoriesObj))
-        this.#categoriesObj[+category.shop_id] = {};
-      if (!(category.shop_category_id in this.#categoriesObj[category.shop_id]))
-        this.#categoriesObj[category.shop_id][+category.shop_category_id] = {};
-      this.#categoriesObj[category.shop_id][category.shop_category_id] =
-        category.db_id;
-
-      const categoryKeyWords = splitCategories(category.title);
-      categoryKeyWords.forEach((key) => {
-        if (!(key in this.#categoriesAddedTemp))
-          this.#categoriesAddedTemp[key] = [];
-        this.#categoriesAddedTemp[key].push(category.db_id);
-      });
-    });
   }
 
   formatProductData(products, prices, features) {
@@ -182,236 +72,37 @@ class DataFormatter {
     return productsFormatted;
   }
 
-  addAuchanProductsToQuery(products, dbId) {
-    const shopId = this.#shopConfig.auchan.dbId;
-    this.#insertShop = shopId;
-    for (let product of products.search.products) {
-      if (this.#productIds.includes(product.id)) {
-        continue;
-      }
-      let country = null;
-      let brand = null;
-      let weight = null;
-      const priceData = [];
-      const currPrice = product.special_price;
-      const oldPrice = product.price.regularPrice.amount.value;
-      if (!currPrice)
-        priceData.push(null, shopId, datetime(), oldPrice, 'price');
-      else {
-        priceData.push(null, shopId, datetime(), currPrice, 'price');
-        priceData.push(null, shopId, datetime(), oldPrice, 'oldPrice');
-      }
-
-      this.#insertPriceData.push(priceData);
-
-      const featureData = [];
-      featureData.push(
-        null,
-        shopId,
-        'url_key',
-        product.url_key,
-        null,
-        shopId,
-        'id',
-        product.id
-      );
-      this.#productIds.push(product.id);
-      this.#idProductMatch[product.id] = this.#productIds.length - 1;
-      for (let attribute of product.attributes) {
-        if (attribute.code == 'country_of_manufacture')
-          country = attribute.value;
-        else if (attribute.code == 'brand') brand = attribute.value;
-        else if (attribute.code == 'weight2') weight = attribute.value;
-        else featureData.push(null, shopId, attribute.label, attribute.value);
-      }
-      this.#insertFeatureData.push(featureData);
-      if (!weight) {
-        const nameParts = product.name.split(',');
-        weight = nameParts[nameParts.length - 1];
-      }
-
-      const category = product.categories[product.categories.length - 1];
-      const categoryId = category.id;
-      const categoryName = category.name;
-      const dbCategoryId = this.#categoriesObj[shopId][categoryId];
-      if (!dbCategoryId) {
-        this.#categoriesToInsert[this.#insertProductData.length] = {
-          id: categoryId,
-          name: categoryName,
-          parentId: dbId,
-        };
-      }
-
-      this.#insertProductData.push([
-        dbCategoryId,
-        product.name,
-        product.meta_description,
-        product.thumbnail.url,
-        resolveCountry(country),
-        resolveWeight(weight),
-        resolveBrand(brand),
-      ]);
-    }
-  }
-
-  addSilpoProductsToQuery(products, dbId) {
-    const shopId = this.#shopConfig.silpo.dbId;
-    this.#insertShop = shopId;
-    for (let product of products.data.items) {
-      if (this.#productIds.includes(product.id)) {
-        continue;
-      }
-      let country = null;
-      let brand = null;
-      let weight = product.unit;
-      const priceData = [];
-      for (let price of product.prices) {
-        let comment = price.Type;
-        if (comment == 'specialPrice')
-          comment = product.promotions[0].description;
-        priceData.push(null, shopId, datetime(), price.Value, comment);
-      }
-      this.#insertPriceData.push(priceData);
-
-      const featureData = [];
-      featureData.push(
-        null,
-        shopId,
-        'url_key',
-        product.slug,
-        null,
-        shopId,
-        'id',
-        product.id
-      );
-      this.#productIds.push(product.id);
-      this.#idProductMatch[product.id] = this.#productIds.length - 1;
-      if (product.parameters) {
-        for (let attribute of product.parameters) {
-          if (attribute.key == 'country') country = attribute.value;
-          else if (attribute.key == 'trademark') brand = attribute.value;
-          else if (attribute.name)
-            featureData.push(
-              null,
-              shopId,
-              resolveFeatureName(attribute.name),
-              resolveFeatureValue(attribute.value)
-            );
-        }
-      }
-
-      const category = product.categories[product.categories.length - 1];
-      const categoryId = category.id;
-      const categoryName = category.name;
-      let dbCategoryId = this.#categoriesObj[shopId][categoryId];
-
-      if (categoryName && !dbCategoryId) {
-        this.#categoriesToInsert[this.#insertProductData.length] = {
-          id: categoryId,
-          name: categoryName,
-          parentId: dbId,
-        };
-      } else if (!categoryName) dbCategoryId = dbId;
-
-      this.#insertFeatureData.push(featureData);
-      this.#insertProductData.push([
-        dbCategoryId,
-        product.name,
-        null,
-        product.mainImage,
-        resolveCountry(country),
-        resolveWeight(weight),
-        resolveBrand(brand),
-      ]);
-    }
-  }
-
-  pickUpdates(ids) {
-    const featureInsertLen = 4;
-    const priceInsertLen = 5;
-    const pricesUpdate = [];
-    const featuresUpdate = [];
-    for (const id of ids) {
-      const shopId = id.id;
-      const dbId = id.product_id;
-      const i = this.#idProductMatch[shopId].toString();
-      this.#insertProductData[i] = null;
-      const featureUpdate = this.#insertFeatureData[i].slice();
-      this.#insertFeatureData[i] = null;
-      const priceUpdate = this.#insertPriceData[i].slice();
-      this.#insertPriceData[i] = null;
-      if (id.update_needed) {
-        for (let j = 0; j < priceUpdate.length; j += priceInsertLen) {
-          const chunk = priceUpdate.slice(j, j + priceInsertLen);
-          chunk[0] = dbId;
-          pricesUpdate.push(chunk);
-        }
-      }
-
-      for (let j = 0; j < featureUpdate.length; j += featureInsertLen) {
-        const chunkF = featureUpdate.slice(j, j + featureInsertLen);
-        chunkF[0] = dbId;
-        featuresUpdate.push(chunkF);
-      }
-    }
-
-    cleanArray(this.#insertProductData);
-    cleanArray(this.#insertFeatureData);
-    cleanArray(this.#insertPriceData);
-    return { prices: pricesUpdate, features: featuresUpdate };
-  }
-
-  getInsertProductsData() {
-    const insertProductData = this.#insertProductData;
-    const insertFeatureData = this.#insertFeatureData;
-    const insertPriceData = this.#insertPriceData;
-    return {
-      insertProductData,
-      insertFeatureData,
-      insertPriceData,
-    };
-  }
-
-  getCategoriesAdditionalData() {
-    return [
-      this.#categoriesToInsert,
-      this.#categoriesObj,
-      this.#insertShop,
-      this.#categoriesAddedTemp,
-      this.#productIds,
-    ];
-  }
-
-  cleanInsertProductData() {
-    this.#insertFeatureData = [];
-    this.#insertProductData = [];
-    this.#insertPriceData = [];
-    this.#productIds = [];
-    this.#idProductMatch = {};
-    this.#insertShop = null;
-    this.#categoriesToInsert = {};
-  }
-
   formatListData(data) {
-    const dataFormatted = {products: {}, list: null};
+    const dataFormatted = { products: {}, list: null };
     const productsIdsPrices = [];
     for (const row of data) {
       const id = row.id;
-      const shopName = this.#shopsIds[row.shop_id.toString()].title;
+      const shopName =
+        shopsFormatter.getShopsIds()[row.shop_id.toString()].title;
       if (!(id in dataFormatted.products)) {
-        dataFormatted.products[id] = {title: row.title, shops: {}, tableShopIgnore: true};
+        dataFormatted.products[id] = {
+          title: row.title,
+          shops: {},
+          tableShopIgnore: true,
+        };
       }
-      dataFormatted.products[id].shops[shopName] = {price: row.price, date: row.date};
+      dataFormatted.products[id].shops[shopName] = {
+        price: row.price,
+        date: row.date,
+      };
     }
 
     for (const [id, product] of Object.entries(dataFormatted.products)) {
-      if (Object.keys(product.shops).length == Object.keys(this.#shopsIds).length) {
+      if (
+        Object.keys(product.shops).length ==
+        Object.keys(shopsFormatter.getShopsIds()).length
+      ) {
         product.tableShopIgnore = false;
-        productsIdsPrices.push(id)
+        productsIdsPrices.push(id);
       }
     }
     if (data.length > 0) dataFormatted.list = data[0].list;
-    return {dataFormatted, productsIdsPrices};
+    return { dataFormatted, productsIdsPrices };
   }
 
   formatListPrices(data) {
@@ -419,12 +110,13 @@ class DataFormatter {
     const shopKeys = [];
     for (const row of data) {
       const shop = row.shop_id;
-      const shopName = this.#shopsIds[shop.toString()].title;
-      if (!(shopName in pricesFormatted)) pricesFormatted[shopName] = {name: shopName, dates: [], data: []};
+      const shopName = shopsFormatter.getShopsIds()[shop.toString()].title;
+      if (!(shopName in pricesFormatted))
+        pricesFormatted[shopName] = { name: shopName, dates: [], data: [] };
       pricesFormatted[shopName].dates.push(row.d);
       pricesFormatted[shopName].data.push([Date.parse(row.d), +row.price]);
-      if(!shopKeys.includes(shop)) shopKeys.push(shop);
-    } 
+      if (!shopKeys.includes(shop)) shopKeys.push(shop);
+    }
     return { data: Object.values(pricesFormatted), keys: shopKeys };
   }
 
@@ -432,39 +124,53 @@ class DataFormatter {
     const pricesByShop = {};
     for (const row of data) {
       if (!(row.shop_id in pricesByShop)) pricesByShop[row.shop_id] = {};
-      if (!(row.product_id in pricesByShop[row.shop_id])) pricesByShop[row.shop_id][row.product_id] = {name: row.title, dates: [], data: []};
+      if (!(row.product_id in pricesByShop[row.shop_id]))
+        pricesByShop[row.shop_id][row.product_id] = {
+          name: row.title,
+          dates: [],
+          data: [],
+        };
       pricesByShop[row.shop_id][row.product_id].dates.push(row.date);
-      pricesByShop[row.shop_id][row.product_id].data.push([Date.parse(row.date), +row.price]);
+      pricesByShop[row.shop_id][row.product_id].data.push([
+        Date.parse(row.date),
+        +row.price,
+      ]);
     }
     return pricesByShop;
   }
 
   formatSearchData(search) {
-    const {data, shopIds} = search;
+    const { data, shopIds } = search;
     const formattedData = {};
-    data.forEach(row => {
+    data.forEach((row) => {
       formattedData[row.id] = row;
       row.shops = [];
     });
-    shopIds.forEach(row => formattedData[row.product_id].shops.push(row.shop_id));
+    shopIds.forEach((row) =>
+      formattedData[row.product_id].shops.push(row.shop_id)
+    );
     return Object.values(formattedData);
   }
 
   formatListToInsert(data, listId) {
     const res = [];
     console.log(listId);
-    data.products.forEach(id => res.push(listId, id, data.title));
+    data.products.forEach((id) => res.push(listId, id, data.title));
     return res;
   }
 
   formatShopPricesByDate(data) {
-    const formattedData = {name: 'Різниця ціни Сільпо і Ашану', dates: [], data: []};
+    const formattedData = {
+      name: 'Різниця ціни Сільпо і Ашану',
+      dates: [],
+      data: [],
+    };
     let diff = null;
     for (const row of data) {
       if (diff == null) {
         diff = +row.sum;
         continue;
-      } 
+      }
       diff -= +row.sum;
       formattedData.dates.push(row.sumdate);
       formattedData.data.push([Date.parse(row.sumdate), diff]);
@@ -474,15 +180,17 @@ class DataFormatter {
   }
 
   formatAvgDiff(data) {
-    const formattedData = {name: 'Різниця ціни Сільпо і Ашану', dates: [], data: []};
+    const formattedData = {
+      name: 'Різниця ціни Сільпо і Ашану',
+      dates: [],
+      data: [],
+    };
     for (const row of data) {
       formattedData.dates.push(row.date);
       formattedData.data.push([Date.parse(row.date), +row.diff]);
     }
-    return formattedData
+    return formattedData;
   }
 }
 
-const df = new DataFormatter();
-
-module.exports = df;
+module.exports = new DataFormatter();

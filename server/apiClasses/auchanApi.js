@@ -49,7 +49,7 @@ class AuchanApi extends BaseApi {
       this.#getProductByCategoryVariables
     );
     if (res.error) return res;
-    await delay(3000);
+    await delay(500);
     if (res.data.search)
       this.#getProductByCategoryTotalPages =
         res.data.search.page_info.total_pages;
@@ -84,5 +84,4 @@ class AuchanApi extends BaseApi {
   }
 }
 
-const auchanApi = new AuchanApi();
-module.exports = auchanApi;
+module.exports = AuchanApi;

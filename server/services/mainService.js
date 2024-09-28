@@ -1,7 +1,9 @@
 'use strict';
 const Fuse = require('fuse.js');
-const dataFormatter = require('../database/dataFormatter.js');
 const db = require('../database/database.js');
+const shopsFormatter = require('../dataFormatters/shopsFormatter.js');
+const dataFormatter = require('../database/dataFormatter.js');
+const InsertProductsFormatter = require('../dataFormatters/insertProductsFormatter.js');
 
 class MainService {
   #fuseOptions = {
@@ -21,12 +23,13 @@ class MainService {
 
   async #getShopsIds(fastify) {
     const shops = await db.getShopsIds(fastify);
-    dataFormatter.processShopsIds(shops);
+    shopsFormatter.processShopsIds(shops);
   }
 
   async addCategories(categories, shopName) {
+    await this.getCategoriesIds();
     const [categoriesFormatted, shopId, categoriesAddedTemp] =
-      await dataFormatter.formatCategories(categories, shopName);
+      await shopsFormatter.formatCategories(categories, shopName);
     await db.insertCategories(categoriesFormatted, shopId, categoriesAddedTemp);
   }
 
@@ -48,7 +51,7 @@ class MainService {
 
   async getCategoriesIds() {
     const [rows, rowsAll] = await db.getCategoriesIds();
-    dataFormatter.cacheCategoriesIds(rowsAll);
+    shopsFormatter.cacheCategoriesIds(rowsAll);
     return rows;
   }
 
@@ -88,18 +91,22 @@ class MainService {
   }
 
   getShops() {
-    return dataFormatter.getShops();
+    return shopsFormatter.getShops();
   }
 
-  addAuchanProductsToQuery(data, dbId) {
-    dataFormatter.addAuchanProductsToQuery(data, dbId);
+  getInsertProductsFormatter() {
+    return new InsertProductsFormatter();
   }
 
-  addSilpoProductsToQuery(data, dbId) {
-    dataFormatter.addSilpoProductsToQuery(data, dbId);
+  addAuchanProductsToQuery(data, dbId, insertProductsFormatter) {
+    insertProductsFormatter.addAuchanProductsToQuery(data, dbId);
   }
 
-  async #checkProductsForSimilarity(insertProductData, productIds, insertShop) {
+  addSilpoProductsToQuery(data, dbId, insertProductsFormatter) {
+    insertProductsFormatter.addSilpoProductsToQuery(data, dbId);
+  }
+
+  async #checkProductsForSimilarity(insertProductData, productIds, insertShop, insertProductsFormatter) {
     const ids = [];
     const productIdsTaken = [];
     for (const i in insertProductData) {
@@ -132,19 +139,21 @@ class MainService {
       }
     }
 
-    return dataFormatter.pickUpdates(ids);
+    return insertProductsFormatter.pickUpdates(ids);
   }
 
-  async insertProductsData() {
+  async insertProductsData(insertProductsFormatter) {
     const [
       categoriesToInsert,
       categoriesObj,
       insertShop,
       categoriesAddedTemp,
       productIds,
-    ] = dataFormatter.getCategoriesAdditionalData();
+    ] = insertProductsFormatter.getCategoriesAdditionalData();
     let { insertPriceData, insertFeatureData, insertProductData } =
-      dataFormatter.getInsertProductsData();
+    insertProductsFormatter.getInsertProductsData();
+      const rand = Math.random(0, 1);
+      console.log(rand, 'insertProductsData');
 
     for (const productArrayPlace of Object.keys(categoriesToInsert)) {
       const category = categoriesToInsert[productArrayPlace];
@@ -160,24 +169,30 @@ class MainService {
       insertProductData[productArrayPlace][0] = dbCategoryId;
     }
 
+    console.log(rand, 'checkExistingIds');
+
     const oldIds = await db.checkExistingIds(productIds, insertShop);
-    const pricesUpdate1 = dataFormatter.pickUpdates(oldIds).prices;
+    const pricesUpdate1 = insertProductsFormatter.pickUpdates(oldIds).prices;
+
+    console.log(rand, 'checkProductsForSimilarity');
 
     const { prices: pricesUpdate2, features: featuresUpdate } =
       await this.#checkProductsForSimilarity(
         insertProductData,
         productIds,
-        insertShop
+        insertShop,
+        insertProductsFormatter
       );
 
     const pricesUpdate = pricesUpdate1.concat(pricesUpdate2);
+
+    console.log(rand, 'insertProductsData');
 
     await db.insertProductsData(pricesUpdate, featuresUpdate, {
       insertProductData,
       insertPriceData,
       insertFeatureData,
     });
-    dataFormatter.cleanInsertProductData();
   }
 
   async getProductsByName(name) {
@@ -206,7 +221,7 @@ class MainService {
   }
 
   async getShopPricesByDate() {
-    const shopPricesByDate = await db.getShopPricesByDate();;
+    const shopPricesByDate = await db.getShopPricesByDate();
     const formattedData = dataFormatter.formatShopPricesByDate(shopPricesByDate);
     return formattedData;
   }

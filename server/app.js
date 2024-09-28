@@ -20,11 +20,13 @@ const build = (opts = {}) => {
     root: process.cwd() + '/frontend/public',
   });
 
-  app.register(fastifyMysql, {
-    promise: true,
-    connectionString: `mysql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`,
-  });
-
+  app
+    .register(fastifyMysql, {
+      promise: true,
+      connectionLimit: 100,
+      waitForConnections: true,
+      connectionString: `mysql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`,
+    });
   app.register(product);
   app.register(category);
   app.register(load);

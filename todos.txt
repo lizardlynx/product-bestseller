@@ -16,3 +16,7 @@
 
 - add usage of artificial intelligence to connect products
 - add price prediction!! (need data)
+
+- add related products
+- add card with discount -> calculate prices based 
+- include api count how to get to?
