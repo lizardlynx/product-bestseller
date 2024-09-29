@@ -20,3 +20,4 @@
 - add related products
 - add card with discount -> calculate prices based 
 - include api count how to get to?
+- interpolation for data, where grabber failed
