@@ -42,7 +42,7 @@ class Predictions {
           return acc;
         }, 0) / pointsPrices.length;
 
-      const rsi = +(100 - (100/(1 + avgGain/avgLoss))).toFixed(2);
+      const rsi = +(100 - 100 / (1 + avgGain / avgLoss)).toFixed(2);
       result.push([points[i][0], rsi]);
     }
     return result;
@@ -59,16 +59,16 @@ class Predictions {
     for (let i = 0; i < points.length; i++) {
       sumY += points[i][1];
       sumX += points[i][0];
-      sumXY += points[i][0]*points[i][1];
+      sumXY += points[i][0] * points[i][1];
       sumXSq += points[i][0] * points[i][0];
     }
 
-    const m = (n*sumXY - sumX*sumY)/(n*sumXSq - sumX*sumX);
-    const b = (sumY - m * sumX)/n;
+    const m = (n * sumXY - sumX * sumY) / (n * sumXSq - sumX * sumX);
+    const b = (sumY - m * sumX) / n;
     for (let i = 0; i < points.length; i++) {
       const x = points[i][0];
-      const y = m*x+b;
-      results.push([x, y])
+      const y = m * x + b;
+      results.push([x, y]);
     }
     return results;
   }
@@ -78,14 +78,60 @@ class Predictions {
     const result = [];
     const leastSquaresSet = this.leastSquares(points, period);
     const [set1, set2] = leastSquaresSet.slice(-2);
-    console.log(set1, set2);
-    const k =  ((set2[1] - set1[1]) / (set2[0] - set1[0]));
+    result.push(...leastSquaresSet);
+    const lastX = points[points.length - 1][0];
+    console.log(lastX);
+    const k = (set2[1] - set1[1]) / (set2[0] - set1[0]);
     for (let i = 0; i < period; i++) {
-      const x = points[points.length - 1][0] + 86400000*(i + 1)
-      const y = set1[1] + ( x - set1[1])* k;
-      result.push(x, y);
+      const x = lastX + 86400000 * (i + 1);
+      const y = set1[1] + (x - set1[0]) * k;
+      result.push([x, y]);
     }
+    return result;
   }
+
+
+
+  // polynomial extrapolation
+  // https://en.wikipedia.org/wiki/Neville's_algorithm
+  // todo rewrite
+  getLagrangeInterpolationFunction(points) {
+    const n = points.length - 1;
+
+    const p = function (i, j, x) {
+      if (i === j) {
+        return points[i][1];
+      }
+
+      return (
+        ((points[j][0] - x) * p(i, j - 1, x) +
+          (x - points[i][0]) * p(i + 1, j, x)) /
+        (points[j][0] - points[i][0])
+      );
+    };
+
+    return function (x) {
+      if (points.length === 0) {
+        return 0;
+      }
+      return p(0, n, x);
+    };
+  }
+
+  // for polynomial extrapolation (some strange results)
+  lagrangeInterpolation(points, period = 14) {
+    const func = this.getLagrangeInterpolationFunction(points);
+    const result = [];
+    const lastX = points[points.length - 1][0];
+    for (let i = 0; i < points.length + period; i++) {
+      const x = i >= points.length ? lastX + 86400000 * (i - points.length + 1) : points[i][0];
+      const y = func(x);
+      result.push([x, y]);
+    } 
+    return result;
+  }
+
+  
 }
 
 module.exports = new Predictions();
