@@ -239,8 +239,7 @@ module.exports = {
       create table lists(
         list_id int ,
           product_id int,
-          title varchar(500),
-          primary key(list_id)
+          title varchar(500)
       );
       
       insert into shops(title, product_url) values('auchan', 'https://auchan.ua/ua/'),('silpo','https://shop.silpo.ua/product/');
