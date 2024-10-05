@@ -65,7 +65,7 @@ const load = (fastify, _, done) => {
     reply.status(204).send();
   });
 
-  fastify.get('/products/all', async function (req, reply) {
+  fastify.get('/products/silpo', async function (req, reply) {
     const shopIds = await mainService.getCategoriesIds();
 
     (async () => {
@@ -94,6 +94,34 @@ const load = (fastify, _, done) => {
         await mainService.insertProductsData(insertProductsFormatter);
         console.log('silpo inserted');
       });
+
+      console.log('idsSilpo', idsSilpo);
+
+      const { timings } = await promiseAllSettledRecordTimings([
+        Promise.allSettled(silpoPromises),
+      ]);
+      console.log(
+        `Execution time full download products: Silpo: ${timings[0]} ms`
+      );
+    })();
+
+    reply.status(204).send();
+  });
+
+  fastify.get('/products/auchan', async function (req, reply) {
+    const shopIds = await mainService.getCategoriesIds();
+
+    (async () => {
+      const { idsSilpo, idsAuchan } = shopIds.reduce(
+        (acc, shopData) => {
+          if (!shopData.db_id == 1) return acc;
+          const shop = shopData.shop_id == 1 ? 'idsAuchan' : 'idsSilpo';
+          acc[shop].push([shopData.shop_category_id, shopData.db_id]);
+          return acc;
+        },
+        { idsSilpo: [], idsAuchan: [] }
+      );
+
       const auchanPromises = idsAuchan.map(async (ids) => {
         let data = {};
         const insertProductsFormatter = mainService.getInsertProductsFormatter();
@@ -114,15 +142,13 @@ const load = (fastify, _, done) => {
         console.log('auchan inserted');
       });
 
-      console.log('idsSilpo', idsSilpo);
       console.log('idsAuchan', idsAuchan);
 
       const { timings } = await promiseAllSettledRecordTimings([
-        Promise.allSettled(silpoPromises),
         Promise.allSettled(auchanPromises)
       ]);
       console.log(
-        `Execution time full download products: Auchan: ${timings[0]} ms; Silpo: ${timings[1]} ms`
+        `Execution time full download products: Auchan: ${timings[0]} ms`
       );
     })();
 

@@ -215,7 +215,11 @@ class MainService {
   }
 
   async createList(data) {
-    const listId = await db.selectFreeListId();
+    let listId = await db.selectFreeListId();
+    if (listId === null) {
+      listId = 1;
+    }
+    console.log('data', data);
     const formattedData = dataFormatter.formatListToInsert(data, listId);
     await db.insertNewList(formattedData);
   }

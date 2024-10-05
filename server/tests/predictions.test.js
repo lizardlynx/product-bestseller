@@ -1,3 +1,4 @@
+const { MS_IN_DAY } = require('../constants');
 const predictionService = require('../services/predictions');
 
 describe('predictionService', () => {
@@ -101,68 +102,79 @@ describe('predictionService', () => {
   });
 
   it('should correctly count linear extrapolation for price range', () => {
-    const msInDay = 86400000;
+    const MS_IN_DAY = 86400000;
     // todo write tests
     const points = [
-      [1 * msInDay, 50],
-      [2 * msInDay, 57],
-      [3 * msInDay, 58],
-      [4 * msInDay, 53],
-      [5 * msInDay, 55],
-      [6 * msInDay, 49],
-      [7 * msInDay, 56],
-      [8 * msInDay, 54],
-      [9 * msInDay, 63],
-      [10 * msInDay, 64],
+      [1 * MS_IN_DAY, 50],
+      [2 * MS_IN_DAY, 57],
+      [3 * MS_IN_DAY, 58],
+      [4 * MS_IN_DAY, 53],
+      [5 * MS_IN_DAY, 55],
+      [6 * MS_IN_DAY, 49],
+      [7 * MS_IN_DAY, 56],
+      [8 * MS_IN_DAY, 54],
+      [9 * MS_IN_DAY, 63],
+      [10 * MS_IN_DAY, 64],
     ];
     const result = predictionService.linearExtrapolation(points, 3);
     expect(result).toEqual([
-      [1 * msInDay, 51.78181818181818],
-      [2 * msInDay, 52.696969696969695],
-      [3 * msInDay, 53.61212121212121],
-      [4 * msInDay, 54.52727272727273],
-      [5 * msInDay, 55.442424242424245],
-      [6 * msInDay, 56.35757575757576],
-      [7 * msInDay, 57.27272727272727],
-      [8 * msInDay, 58.18787878787879],
-      [9 * msInDay, 59.1030303030303],
-      [10 * msInDay, 60.018181818181816],
-      [11 * msInDay, 60.93333333333333],
-      [12 * msInDay, 61.848484848484844],
-      [13 * msInDay, 62.76363636363636],
+      [1 * MS_IN_DAY, 51.78181818181818],
+      [2 * MS_IN_DAY, 52.696969696969695],
+      [3 * MS_IN_DAY, 53.61212121212121],
+      [4 * MS_IN_DAY, 54.52727272727273],
+      [5 * MS_IN_DAY, 55.442424242424245],
+      [6 * MS_IN_DAY, 56.35757575757576],
+      [7 * MS_IN_DAY, 57.27272727272727],
+      [8 * MS_IN_DAY, 58.18787878787879],
+      [9 * MS_IN_DAY, 59.1030303030303],
+      [10 * MS_IN_DAY, 60.018181818181816],
+      [11 * MS_IN_DAY, 60.93333333333333],
+      [12 * MS_IN_DAY, 61.848484848484844],
+      [13 * MS_IN_DAY, 62.76363636363636],
     ]);
   });
 
   it('should correctly count lagrange interpolation for price range', () => {
-    const msInDay = 86400000;
-    // todo write tests
     const points = [
-      [1 * msInDay, 50],
-      [2 * msInDay, 57],
-      [3 * msInDay, 58],
-      [4 * msInDay, 53],
-      [5 * msInDay, 55],
-      [6 * msInDay, 49],
-      [7 * msInDay, 56],
-      [8 * msInDay, 54],
-      [9 * msInDay, 63],
-      [10 * msInDay, 64],
+      [1 * MS_IN_DAY, 50],
+      [2 * MS_IN_DAY, 57],
+      [3 * MS_IN_DAY, 58],
+      [4 * MS_IN_DAY, 53],
+      [5 * MS_IN_DAY, 55],
+      [6 * MS_IN_DAY, 49],
+      [7 * MS_IN_DAY, 56],
+      [8 * MS_IN_DAY, 54],
+      [9 * MS_IN_DAY, 63],
+      [10 * MS_IN_DAY, 64],
     ];
     const result = predictionService.lagrangeInterpolation(points, 3);
     expect(result).toEqual([
-      [1 * msInDay, 50],
-      [2 * msInDay, 57],
-      [3 * msInDay, 58],
-      [4 * msInDay, 53],
-      [5 * msInDay, 55],
-      [6 * msInDay, 49],
-      [7 * msInDay, 56],
-      [8 * msInDay, 54],
-      [9 * msInDay, 63],
-      [10 * msInDay, 64],
-      [11 * msInDay, -2407],
-      [12 * msInDay, -22170],
-      [13 * msInDay, -113210],
+      [1 * MS_IN_DAY, 50],
+      [2 * MS_IN_DAY, 57],
+      [3 * MS_IN_DAY, 58],
+      [4 * MS_IN_DAY, 53],
+      [5 * MS_IN_DAY, 55],
+      [6 * MS_IN_DAY, 49],
+      [7 * MS_IN_DAY, 56],
+      [8 * MS_IN_DAY, 54],
+      [9 * MS_IN_DAY, 63],
+      [10 * MS_IN_DAY, 64],
+      [11 * MS_IN_DAY, -2407],
+      [12 * MS_IN_DAY, -22170],
+      [13 * MS_IN_DAY, -113210],
     ]);
   });
+
+  it('should calculate correct values for newton\'s divided differences', () => {
+    const points = [[5*MS_IN_DAY, 12], [6*MS_IN_DAY,13], [9*MS_IN_DAY, 14], [11*MS_IN_DAY, 16]];
+
+    const res = predictionService.newtonsDividedDifferences(points, 1);
+    expect(res).toEqual(
+      [[5 * MS_IN_DAY, 12],
+      [6 * MS_IN_DAY, 13],
+      [9 * MS_IN_DAY, 14],
+      [11 * MS_IN_DAY, 16],
+      [12 * MS_IN_DAY, 18.3],]
+    );
+  })
 });

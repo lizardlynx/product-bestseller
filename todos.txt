@@ -21,7 +21,7 @@
 - add card with discount -> calculate prices based 
 - include api count how to get to?
 - interpolation for data, where grabber failed
-- price comparing to dollar
+- price comparing to dollar !
 - prediction with neural network
 
 - description why we do not use interpolation for prediction
@@ -30,5 +30,7 @@
 - Linear regression is used to model the relationship between one or more independent variables and a dependent variable. 
 - It aims to find the best-fitting line that describes the relationship within the existing data.
 
-- Extrapolation is about predicting beyond existing data based on observed trends, while regression is about modeling and understanding the relationship between variables within the data.
--  Polynomial extrapolation is typically done by means of Lagrange interpolation or using Newton's method of finite differences to create a Newton series that fits the data. 
++ Extrapolation is about predicting beyond existing data based on observed trends, while regression is about modeling and understanding the relationship between variables within the data.
++  Polynomial extrapolation is typically done by means of Lagrange interpolation or using Newton's method of finite differences to create a Newton series that fits the data. 
++ Newton's Divided Differences
+- create correlation heatmap?

@@ -14,8 +14,18 @@ async function loadShopData(shopName) {
   loadCategories();
 }
 
-async function loadProducts() {
-  const res = await fetch('/products/all', {
+async function loadProductsSilpo() {
+  const res = await fetch('/products/silpo', {
+    method: 'GET',
+  });
+  if (!res.ok) return initError(await res.text());
+
+  const resJSON = await res.json();
+  console.log(resJSON);
+}
+
+async function loadProductsAuchan() {
+  const res = await fetch('/products/auchan', {
     method: 'GET',
   });
   if (!res.ok) return initError(await res.text());
@@ -34,5 +44,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document
     .getElementById('all')
     .addEventListener('click', () => loadShopData('all'));
-  document.getElementById('products').addEventListener('click', loadProducts);
+  document.getElementById('products-silpo').addEventListener('click', loadProductsSilpo);
+  document.getElementById('products-auchan').addEventListener('click', loadProductsAuchan);
 });

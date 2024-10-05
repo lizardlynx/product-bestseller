@@ -1,3 +1,5 @@
+const { MS_IN_DAY } = require('../constants');
+
 class Predictions {
   sma(points, period = 8) {
     const result = [];
@@ -83,14 +85,12 @@ class Predictions {
     console.log(lastX);
     const k = (set2[1] - set1[1]) / (set2[0] - set1[0]);
     for (let i = 0; i < period; i++) {
-      const x = lastX + 86400000 * (i + 1);
+      const x = lastX + MS_IN_DAY * (i + 1);
       const y = set1[1] + (x - set1[0]) * k;
       result.push([x, y]);
     }
     return result;
   }
-
-
 
   // polynomial extrapolation
   // https://en.wikipedia.org/wiki/Neville's_algorithm
@@ -124,14 +124,57 @@ class Predictions {
     const result = [];
     const lastX = points[points.length - 1][0];
     for (let i = 0; i < points.length + period; i++) {
-      const x = i >= points.length ? lastX + 86400000 * (i - points.length + 1) : points[i][0];
+      const x =
+        i >= points.length
+          ? lastX + MS_IN_DAY * (i - points.length + 1)
+          : points[i][0];
       const y = func(x);
       result.push([x, y]);
-    } 
+    }
     return result;
   }
 
-  
+  #dividedDifferencePolynomial(points) {
+    let [x0, y0] = points[0];
+    let res = y0;
+    let xs = points.map((xy) => xy[0]);
+    const dividedDiffTable = Array.from({ length: points.length }, (e) =>
+      Array(points.length).fill(0)
+    );
+    for (let i = 0; i < points.length; i++) {
+      dividedDiffTable[i][0] = points[i][1];
+    }
+    for (let i = 1; i < points.length; i++) {
+      for (var j = 0; j < points.length - i; j++) {
+        dividedDiffTable[j][i] =
+          (dividedDiffTable[j][i - 1] - dividedDiffTable[j + 1][i - 1]) /
+          (xs[j] - xs[i + j]);
+      }
+    }
+
+    return (x) => {
+      let mult = 1;
+
+      for (let i = 1; i < points.length; i++) {
+        mult *= x - xs[i - 1];
+        const diff = mult * dividedDiffTable[0][i];
+        res += diff;
+      }
+      return res;
+    };
+  }
+
+  newtonsDividedDifferences(points, period) {
+    const func = this.#dividedDifferencePolynomial(points);
+    const result = [...points];
+    const lastX = points[points.length - 1][0];
+    for (let i = 0; i < period; i++) {
+      const x = lastX + MS_IN_DAY * (i + 1);
+      const y = +func(x).toFixed(2);
+      result.push([x, y]);
+    }
+    return result;
+  }
 }
 
 module.exports = new Predictions();
