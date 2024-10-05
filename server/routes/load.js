@@ -69,17 +69,18 @@ const load = (fastify, _, done) => {
     const shopIds = await mainService.getCategoriesIds();
 
     (async () => {
-      const { idsSilpo, idsAuchan } = shopIds.reduce(
+      const idsSilpo = shopIds.reduce(
         (acc, shopData) => {
           if (!shopData.db_id == 1) return acc;
-          const shop = shopData.shop_id == 1 ? 'idsAuchan' : 'idsSilpo';
-          acc[shop].push([shopData.shop_category_id, shopData.db_id]);
+          if (shopData.shop_id != 1) {
+            acc.push([shopData.shop_category_id, shopData.db_id]);
+          }
           return acc;
         },
-        { idsSilpo: [], idsAuchan: [] }
+        []
       );
 
-      const silpoPromises = idsSilpo.map(async (ids) => {
+      const silpoPromises = [idsSilpo[0]].map(async (ids) => {
         let data = {};
         const insertProductsFormatter = mainService.getInsertProductsFormatter();
         const [initialId, dbId] = ids;
@@ -112,14 +113,15 @@ const load = (fastify, _, done) => {
     const shopIds = await mainService.getCategoriesIds();
 
     (async () => {
-      const { idsSilpo, idsAuchan } = shopIds.reduce(
+      const idsAuchan = shopIds.reduce(
         (acc, shopData) => {
           if (!shopData.db_id == 1) return acc;
-          const shop = shopData.shop_id == 1 ? 'idsAuchan' : 'idsSilpo';
-          acc[shop].push([shopData.shop_category_id, shopData.db_id]);
+          if (shopData.shop_id == 1) {
+            acc.push([shopData.shop_category_id, shopData.db_id]);
+          }
           return acc;
         },
-        { idsSilpo: [], idsAuchan: [] }
+        []
       );
 
       const auchanPromises = idsAuchan.map(async (ids) => {

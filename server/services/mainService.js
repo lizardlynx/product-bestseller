@@ -106,7 +106,12 @@ class MainService {
     insertProductsFormatter.addSilpoProductsToQuery(data, dbId);
   }
 
-  async #checkProductsForSimilarity(insertProductData, productIds, insertShop, insertProductsFormatter) {
+  async #checkProductsForSimilarity(
+    insertProductData,
+    productIds,
+    insertShop,
+    insertProductsFormatter
+  ) {
     const ids = [];
     const productIdsTaken = [];
     for (const i in insertProductData) {
@@ -115,15 +120,12 @@ class MainService {
       const brand = product[6];
 
       const similar = await db.getSimilarProducts([
-        brand,
-        weight,
         insertShop,
-        brand,
-        weight,
       ]);
 
       const fuse = new Fuse(similar, this.#fuseOptions);
       const productsSimilar = fuse.search(product[1]);
+
       if (productsSimilar.length > 0) {
         for (let j = 0; j < productsSimilar.length; j++) {
           if (!productIdsTaken.includes(productsSimilar[j].item.id)) {
@@ -151,9 +153,9 @@ class MainService {
       productIds,
     ] = insertProductsFormatter.getCategoriesAdditionalData();
     let { insertPriceData, insertFeatureData, insertProductData } =
-    insertProductsFormatter.getInsertProductsData();
-      const rand = Math.random(0, 1);
-      console.log(rand, 'insertProductsData');
+      insertProductsFormatter.getInsertProductsData();
+    const rand = Math.random(0, 1);
+    console.log(insertProductData.length, 'insertProductsData length 1');
 
     for (const productArrayPlace of Object.keys(categoriesToInsert)) {
       const category = categoriesToInsert[productArrayPlace];
@@ -168,13 +170,12 @@ class MainService {
       }
       insertProductData[productArrayPlace][0] = dbCategoryId;
     }
-
-    console.log(rand, 'checkExistingIds');
+    console.log(insertProductData.length, 'insertProductsData length 2');
 
     const oldIds = await db.checkExistingIds(productIds, insertShop);
+    console.log(insertProductData.length, 'insertProductsData length 3');
     const pricesUpdate1 = insertProductsFormatter.pickUpdates(oldIds).prices;
-
-    console.log(rand, 'checkProductsForSimilarity');
+    console.log(insertProductData.length, 'insertProductsData length 4');
 
     const { prices: pricesUpdate2, features: featuresUpdate } =
       await this.#checkProductsForSimilarity(
@@ -207,11 +208,19 @@ class MainService {
 
   async getListById(id) {
     const res = await db.getListById(id);
-    const {dataFormatted, productsIdsPrices} = dataFormatter.formatListData(res);
-    const [prices, byShop] = await db.getListPrices(productsIdsPrices, Object.keys(dataFormatted.products));
+    const { dataFormatted, productsIdsPrices } =
+      dataFormatter.formatListData(res);
+    const [prices, byShop] = await db.getListPrices(
+      productsIdsPrices,
+      Object.keys(dataFormatted.products)
+    );
     const pricesFormatted = dataFormatter.formatListPrices(prices);
     const pricesByShopFormatted = dataFormatter.formatListPricesByShop(byShop);
-    return {list: dataFormatted, prices: pricesFormatted, byShop: pricesByShopFormatted};
+    return {
+      list: dataFormatted,
+      prices: pricesFormatted,
+      byShop: pricesByShopFormatted,
+    };
   }
 
   async createList(data) {
@@ -226,13 +235,16 @@ class MainService {
 
   async getShopPricesByDate() {
     const shopPricesByDate = await db.getShopPricesByDate();
-    const formattedData = dataFormatter.formatShopPricesByDate(shopPricesByDate);
+    const formattedData =
+      dataFormatter.formatShopPricesByDate(shopPricesByDate);
     return formattedData;
   }
 
   async getShopAvgPricesByDate() {
     const averageDifferenceByDate = await db.getShopAvgPricesByDate();
-    const formattedAvgDiff = dataFormatter.formatAvgDiff(averageDifferenceByDate);
+    const formattedAvgDiff = dataFormatter.formatAvgDiff(
+      averageDifferenceByDate
+    );
     return formattedAvgDiff;
   }
 }
