@@ -205,9 +205,6 @@ class InsertProductsFormatter {
       }
     }
 
-    cleanArray(this.#insertProductData);
-    cleanArray(this.#insertFeatureData);
-    cleanArray(this.#insertPriceData);
     return { prices: pricesUpdate, features: featuresUpdate };
   }
 
@@ -216,9 +213,9 @@ class InsertProductsFormatter {
     const insertFeatureData = this.#insertFeatureData;
     const insertPriceData = this.#insertPriceData;
     return {
-      insertProductData,
-      insertFeatureData,
-      insertPriceData,
+      insertProductData: JSON.parse(JSON.stringify(insertProductData)),
+      insertFeatureData: JSON.parse(JSON.stringify(insertFeatureData)),
+      insertPriceData: JSON.parse(JSON.stringify(insertPriceData)),
     };
   }
 }

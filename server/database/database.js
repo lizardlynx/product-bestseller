@@ -239,6 +239,8 @@ class Database {
       queries.selectSimilarProducts,
       options
     );
+    console.log(queries.selectSimilarProducts,
+      options);
     return similar;
   }
 

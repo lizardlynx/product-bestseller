@@ -4,6 +4,7 @@ const db = require('../database/database.js');
 const shopsFormatter = require('../dataFormatters/shopsFormatter.js');
 const dataFormatter = require('../database/dataFormatter.js');
 const InsertProductsFormatter = require('../dataFormatters/insertProductsFormatter.js');
+const openAiApi = require('./openAiApi.js');
 
 class MainService {
   #fuseOptions = {
@@ -114,31 +115,60 @@ class MainService {
   ) {
     const ids = [];
     const productIdsTaken = [];
+    console.log('checkProductsForSimilarity', insertProductData);
     for (const i in insertProductData) {
+      console.log('i am here', i, insertProductData[i]);
       const product = insertProductData[i];
       const weight = product[5];
       const brand = product[6];
 
-      const similar = await db.getSimilarProducts([
-        insertShop,
-      ]);
+      console.log('!!!!!!!');
+      const similar = await db.getSimilarProducts([insertShop]);
+
+      console.log(similar, 0);
 
       const fuse = new Fuse(similar, this.#fuseOptions);
+      console.log(1);
       const productsSimilar = fuse.search(product[1]);
+      
 
-      if (productsSimilar.length > 0) {
-        for (let j = 0; j < productsSimilar.length; j++) {
-          if (!productIdsTaken.includes(productsSimilar[j].item.id)) {
-            ids.push({
-              id: productIds[i],
-              product_id: productsSimilar[j].item.id,
-              update_needed: true,
-            });
-            productIdsTaken.push(productsSimilar[j].item.id);
-            break;
-          }
-        }
-      }
+      console.log('calling completion chat');
+      const openAiProducts = similar.map(
+        (product) => ({
+          id: product.id,
+          productName:
+            product.title + product.brand
+              ? `, Brand: ${product.brand}`
+              : '' + product.weight_g
+              ? `, Weight: ${product.weight_g}`
+              : '',
+        })
+      );
+      console.log(openAiProducts, '99999');
+      await openAiApi.getCompletionChat(
+        openAiProducts, []
+      );
+      if (productsSimilar.length === 0) continue;
+
+      console.log('here', product);
+      // const product1 =
+      process.exit(0);
+
+      //
+
+      // if (productsSimilar.length > 0) {
+      //   for (let j = 0; j < productsSimilar.length; j++) {
+      //     if (!productIdsTaken.includes(productsSimilar[j].item.id)) {
+      //       ids.push({
+      //         id: productIds[i],
+      //         product_id: productsSimilar[j].item.id,
+      //         update_needed: true,
+      //       });
+      //       productIdsTaken.push(productsSimilar[j].item.id);
+      //       break;
+      //     }
+      //   }
+      // }
     }
 
     return insertProductsFormatter.pickUpdates(ids);
@@ -155,7 +185,7 @@ class MainService {
     let { insertPriceData, insertFeatureData, insertProductData } =
       insertProductsFormatter.getInsertProductsData();
     const rand = Math.random(0, 1);
-    console.log(insertProductData.length, 'insertProductsData length 1');
+    console.log(insertProductData, 'insertProductsData length 1');
 
     for (const productArrayPlace of Object.keys(categoriesToInsert)) {
       const category = categoriesToInsert[productArrayPlace];
@@ -173,7 +203,7 @@ class MainService {
     console.log(insertProductData.length, 'insertProductsData length 2');
 
     const oldIds = await db.checkExistingIds(productIds, insertShop);
-    console.log(insertProductData.length, 'insertProductsData length 3');
+    console.log(oldIds);
     const pricesUpdate1 = insertProductsFormatter.pickUpdates(oldIds).prices;
     console.log(insertProductData.length, 'insertProductsData length 4');
 

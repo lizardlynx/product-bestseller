@@ -20,8 +20,17 @@ Example of result in json:
 {result: [{id: '<result>', productName: '<productName-2>'}]}
 <result> may be either <id> or empty string, if product from the second shop does not match to any of the products from the first shop. 
 
-Example of matching:
-Provided:
+Weights for matched products have to be the same!
+If there are brands provided for both products, they have to be the same!
+If products are of the same weight and brand, they may not be the same. Check their filling, description etc.
+Names or brands may be written in using Latin letters. If so, check if the similar products name has the variation of the word in latin and if they don't, write it the <result> empty string. 
 
+Example:
+Product 1: "Заморожені креветки BlueSea, 300г"
+Product 2: "Креветки морські заморожені Deep Aqua 300 грамів"
+Do not match them as latin words are not in any way variation of the other.
 `;
-module.exports = {MS_IN_DAY, OPENAI_ASSISTANT_SYSTEM_PROMPT};
+
+const OPENAI_MODEL = 'gpt-4o-mini';
+
+module.exports = {MS_IN_DAY, OPENAI_ASSISTANT_SYSTEM_PROMPT, OPENAI_MODEL};
