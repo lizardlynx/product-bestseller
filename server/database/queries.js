@@ -95,9 +95,7 @@ module.exports = {
   selectSimilarProducts: `select distinct p.* from products p
   inner join features f
   on p.id = f.product_id
-  where ? not in (select distinct f.shop_id from products p
-    inner join features f
-    on p.id = f.product_id)`, // p.brand = ? 
+  where f.shop_id <> ? and (p.weight_g = ? or p.weight_g is null)`, // p.brand = ? 
   getAllLists: `select distinct list_id, title from lists`,
   getListById: `select p.id, p.title, l.title as list, r.price, r.shop_id, MAX(r.date) as date from lists l
     left join products p

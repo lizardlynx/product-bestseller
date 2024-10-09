@@ -235,12 +235,12 @@ class Database {
   }
 
   async getSimilarProducts(options) {
+    console.log(queries.selectSimilarProducts,
+      options);
     const [similar, simFields] = await this.#connection.query(
       queries.selectSimilarProducts,
       options
     );
-    console.log(queries.selectSimilarProducts,
-      options);
     return similar;
   }
 

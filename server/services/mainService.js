@@ -123,30 +123,28 @@ class MainService {
       const brand = product[6];
 
       console.log('!!!!!!!');
-      const similar = await db.getSimilarProducts([insertShop]);
-
-      console.log(similar, 0);
+      const similar = await db.getSimilarProducts([insertShop, weight]);
 
       const fuse = new Fuse(similar, this.#fuseOptions);
       console.log(1);
       const productsSimilar = fuse.search(product[1]);
       
 
-      console.log('calling completion chat');
-      const openAiProducts = similar.map(
+      console.log(product, 'calling completion chat');
+      const openAiProducts = productsSimilar.map(
         (product) => ({
           id: product.id,
           productName:
-            product.title + product.brand
+            product.title + (product.brand
               ? `, Brand: ${product.brand}`
-              : '' + product.weight_g
+              : '') + (product.weight_g
               ? `, Weight: ${product.weight_g}`
-              : '',
+              : ''),
         })
       );
-      console.log(openAiProducts, '99999');
+      console.log(productsSimilar);
       await openAiApi.getCompletionChat(
-        openAiProducts, []
+        openAiProducts, [] // here
       );
       if (productsSimilar.length === 0) continue;
 
