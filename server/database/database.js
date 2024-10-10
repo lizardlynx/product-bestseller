@@ -57,7 +57,7 @@ class Database {
     const [rows, fields] = await this.#connection.query(queries.getPricesDataByDates, [
       id,
     ]);
-    this.#releaseConnection(); // cannot use just one connection!!!
+    this.#releaseConnection();
     return rows;
   }
 
@@ -116,6 +116,7 @@ class Database {
         offset,
       [...id]
     );
+
     if (products.length == 0) return [[], [], [], productCount];
     const productIds = products.map((product) => product.id);
     const questionMarkStringProducts =

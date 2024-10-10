@@ -80,7 +80,7 @@ const load = (fastify, _, done) => {
         []
       );
 
-      const silpoPromises = [idsSilpo[0]].map(async (ids) => {
+      const silpoPromises = idsSilpo.map(async (ids) => {
         let data = {};
         const insertProductsFormatter = mainService.getInsertProductsFormatter();
         const [initialId, dbId] = ids;

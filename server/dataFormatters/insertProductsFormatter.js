@@ -12,11 +12,11 @@ class InsertProductsFormatter {
 
   getCategoriesAdditionalData() {
     return [
-      this.#categoriesToInsert,
-      shopsFormatter.getCategoriesObj(),
-      this.#insertShop,
-      shopsFormatter.getCategoriesAddedTemp(),
-      this.#productIds,
+      JSON.parse(JSON.stringify(this.#categoriesToInsert)),
+      JSON.parse(JSON.stringify(shopsFormatter.getCategoriesObj())),
+      JSON.parse(JSON.stringify(this.#insertShop)),
+      JSON.parse(JSON.stringify(shopsFormatter.getCategoriesAddedTemp())),
+      JSON.parse(JSON.stringify(this.#productIds)),
     ];
   }
 
@@ -180,34 +180,36 @@ class InsertProductsFormatter {
     const priceInsertLen = 5;
     const pricesUpdate = [];
     const featuresUpdate = [];
-    for (const id of ids) {
-      const shopId = id.id;
-      const dbId = id.product_id;
-      const i = this.#idProductMatch[shopId].toString();
-      this.#insertProductData[i] = null;
-      // if (!this.#insertFeatureData[i]) continue; // fix it
-      const featureUpdate = this.#insertFeatureData[i].slice();
-      this.#insertFeatureData[i] = null;
-      const priceUpdate = this.#insertPriceData[i].slice();
-      this.#insertPriceData[i] = null;
-      if (id.update_needed) {
-        for (let j = 0; j < priceUpdate.length; j += priceInsertLen) {
-          const chunk = priceUpdate.slice(j, j + priceInsertLen);
-          chunk[0] = dbId;
-          pricesUpdate.push(chunk);
+    try {
+      for (const id of ids) {
+        const shopId = id.id;
+        const dbId = id.product_id;
+        const i = this.#idProductMatch[shopId].toString();
+        this.#insertProductData[i] = null;
+        if (!this.#insertFeatureData[i]) continue; // fix it
+        const featureUpdate = this.#insertFeatureData[i].slice();
+        this.#insertFeatureData[i] = null;
+        const priceUpdate = this.#insertPriceData[i].slice();
+        this.#insertPriceData[i] = null;
+        if (id.update_needed) {
+          for (let j = 0; j < priceUpdate.length; j += priceInsertLen) {
+            const chunk = priceUpdate.slice(j, j + priceInsertLen);
+            chunk[0] = dbId;
+            pricesUpdate.push(chunk);
+          }
+        }
+  
+        for (let j = 0; j < featureUpdate.length; j += featureInsertLen) {
+          const chunkF = featureUpdate.slice(j, j + featureInsertLen);
+          chunkF[0] = dbId;
+          featuresUpdate.push(chunkF);
         }
       }
-
-      for (let j = 0; j < featureUpdate.length; j += featureInsertLen) {
-        const chunkF = featureUpdate.slice(j, j + featureInsertLen);
-        chunkF[0] = dbId;
-        featuresUpdate.push(chunkF);
-      }
+    } catch (err) {
+      console.log(err);
     }
+    
 
-    cleanArray(this.#insertProductData);
-    cleanArray(this.#insertFeatureData);
-    cleanArray(this.#insertPriceData);
     return { prices: pricesUpdate, features: featuresUpdate };
   }
 
@@ -216,9 +218,9 @@ class InsertProductsFormatter {
     const insertFeatureData = this.#insertFeatureData;
     const insertPriceData = this.#insertPriceData;
     return {
-      insertProductData,
-      insertFeatureData,
-      insertPriceData,
+      insertProductData: JSON.parse(JSON.stringify(insertProductData)),
+      insertFeatureData: JSON.parse(JSON.stringify(insertFeatureData)),
+      insertPriceData: JSON.parse(JSON.stringify(insertPriceData)),
     };
   }
 }
