@@ -15,13 +15,25 @@ describe('openAi api class', () => {
         productName:
           'Каша вівсяна з годжі, гарбузом та чіа Overnight Моментальная Овсянушка м/у 50г',
       },
+      {
+        id: '344',
+        productName: 'Напій Sprite 500мл',
+      },
     ];
     const products2 = [
-      'Шоколад чорний Zaini без цукру, 75г',
-      'Каша «Овсянушка» з журавлиною, чорницею та чіа, 50г',
-      'Каша «Овсянушка» з годжі, гарбузом та чіа, 50г',
+      {name: 'Шоколад чорний Zaini без цукру, 75г', i: '11'},
+      {name: 'Каша «Овсянушка» з журавлиною, чорницею та чіа, 50г', i: '22'},
+      {name: 'Каша «Овсянушка» з годжі, гарбузом та чіа, 50г', i: '33'},
+      {name: 'Солодкий газований напій у пляшці', additionalData: 'Brand: Sprite, Weight: 500', i: '12' },
     ];
     const result = await openAiApi.getCompletionChat(products1, products2);
-    expect(result).toEqual({result: [{id: '', productName: products2[0]}, {id: '854', productName: products2[1]}, {id: '874', productName: products2[2]}]});
+    expect(result).toEqual({
+      result: [
+        { id: '', productName: products2[0].name, i: products2[0].i },
+        { id: '854', productName: products2[1].name, i: products2[1].i },
+        { id: '874', productName: products2[2].name, i: products2[2].i },
+        {id: '344', productName: products2[3].name, i: products2[3].i}
+      ],
+    });
   });
 });

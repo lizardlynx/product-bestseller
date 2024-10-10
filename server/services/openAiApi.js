@@ -11,6 +11,7 @@ const openai = new OpenAI({apiKey: process.env.OPENAI_API_KEY});
 const Product = z.object({
   id: z.string(),
   productName: z.string(),
+  i: z.string()
 });
 
 const Result = z.object({
@@ -24,45 +25,39 @@ class OpenAIApi {
     let sum = 0;
     let encoded = gpt4Enc.encode(OPENAI_ASSISTANT_SYSTEM_PROMPT);
     sum += encoded.length;
-    // gpt4Enc.free();
+    
     encoded = gpt4Enc.encode(str1);
     sum += encoded.length;
 
-    // gpt4Enc.free();
     encoded = gpt4Enc.encode(str2);
     sum += encoded.length;
     gpt4Enc.free();
 
     console.log("number of tokens:", sum);
 
-    // console.log(str1);
-    // console.log(str2);
+    const stream = await openai.chat.completions.create({
+        model: OPENAI_MODEL,
+        stream: true,
+        messages: [
+            { role: "system", content: OPENAI_ASSISTANT_SYSTEM_PROMPT },
+            {
+                role: "user",
+                content: str1,
+            },
+            {
+              role: "user",
+              content: str2,
+          },
+        ],
+        response_format: zodResponseFormat(Result, "result"),
+    });
 
-    process.exit(0);
+    let chunks = '';
 
-    // const stream = await openai.chat.completions.create({
-    //     model: OPENAI_MODEL,
-    //     stream: true,
-    //     messages: [
-    //         { role: "system", content: OPENAI_ASSISTANT_SYSTEM_PROMPT },
-    //         {
-    //             role: "user",
-    //             content: str1,
-    //         },
-    //         {
-    //           role: "user",
-    //           content: str2,
-    //       },
-    //     ],
-    //     response_format: zodResponseFormat(Result, "result"),
-    // });
-
-    // let chunks = '';
-
-    // for await (const chunk of stream) {
-    //   chunks += chunk.choices[0]?.delta?.content || '';
-    // }
-    // return JSON.parse(chunks)
+    for await (const chunk of stream) {
+      chunks += chunk.choices[0]?.delta?.content || '';
+    }
+    return JSON.parse(chunks)
   }
 }
 

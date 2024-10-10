@@ -49,7 +49,7 @@ async function loadProducts(categoryId, pageNumber) {
   const breadcrumbs = resJSON.breadcrumbs;
   insertBreadcrumbs(breadcrumbs);
   const pages = document.getElementsByClassName('pages')[0];
-  const pageCount = resJSON.count;
+  const pageCount = Math.ceil(resJSON.count / 20);
   createPagination(pageCount, pages, pageNumber, `/categories/${categoryId}`);
 }
 

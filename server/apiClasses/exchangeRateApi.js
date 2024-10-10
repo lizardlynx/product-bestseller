@@ -1,0 +1,1 @@
+// https://www.xe.com/api/protected/charting-rates/?fromCurrency=USD&toCurrency=UAH&crypto=true

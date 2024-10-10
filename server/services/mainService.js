@@ -115,25 +115,23 @@ class MainService {
   ) {
     const ids = [];
     const productIdsTaken = [];
-    console.log('checkProductsForSimilarity', insertProductData);
+    const productsForOpenAiApiShop1 = [];
+    const productsForOpenAiApiShop2 = [];
     for (const i in insertProductData) {
-      console.log('i am here', i, insertProductData[i]);
       const product = insertProductData[i];
       const weight = product[5];
       const brand = product[6];
 
-      console.log('!!!!!!!');
       const similar = await db.getSimilarProducts([insertShop, weight]);
 
       const fuse = new Fuse(similar, this.#fuseOptions);
-      console.log(1);
-      const productsSimilar = fuse.search(product[1]);
+      let productsSimilar = fuse.search(product[1]);
       
+      if (productsSimilar.length === 0) continue;
 
-      console.log(product, 'calling completion chat');
       const openAiProducts = productsSimilar.map(
-        (product) => ({
-          id: product.id,
+        ({item: product}) => ({
+          id: product.id + '',
           productName:
             product.title + (product.brand
               ? `, Brand: ${product.brand}`
@@ -142,31 +140,30 @@ class MainService {
               : ''),
         })
       );
-      console.log(productsSimilar);
-      await openAiApi.getCompletionChat(
-        openAiProducts, [] // here
-      );
-      if (productsSimilar.length === 0) continue;
+      const additionalData = ((brand
+        ? `, Brand: ${brand}`
+        : '') + (weight
+        ? `, Weight: ${weight}`
+        : ''));
 
-      console.log('here', product);
-      // const product1 =
-      process.exit(0);
+      productsForOpenAiApiShop1.push(...openAiProducts)
+      productsForOpenAiApiShop2.push({name: product[1], additionalData, i: ''+productIds[i]});
+    }
 
-      //
+    const results = await openAiApi.getCompletionChat(
+      productsForOpenAiApiShop1, productsForOpenAiApiShop2
+    );
 
-      // if (productsSimilar.length > 0) {
-      //   for (let j = 0; j < productsSimilar.length; j++) {
-      //     if (!productIdsTaken.includes(productsSimilar[j].item.id)) {
-      //       ids.push({
-      //         id: productIds[i],
-      //         product_id: productsSimilar[j].item.id,
-      //         update_needed: true,
-      //       });
-      //       productIdsTaken.push(productsSimilar[j].item.id);
-      //       break;
-      //     }
-      //   }
-      // }
+    for (const item of results.result) {
+      if (!productIdsTaken.includes(item.id) && productIds.includes(item.i)) {
+        ids.push({
+          id: item.i,
+          product_id: item.id,
+          update_needed: true,
+        });
+        productIdsTaken.push(item.id);
+        break;
+      }
     }
 
     return insertProductsFormatter.pickUpdates(ids);
