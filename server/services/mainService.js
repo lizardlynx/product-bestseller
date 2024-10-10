@@ -114,6 +114,7 @@ class MainService {
     insertProductsFormatter
   ) {
     const ids = [];
+    const productIdsDbExisting = [];
     const productIdsTaken = [];
     const productsForOpenAiApiShop1 = [];
     const productsForOpenAiApiShop2 = [];
@@ -122,10 +123,13 @@ class MainService {
       const weight = product[5];
       const brand = product[6];
 
-      const similar = await db.getSimilarProducts([insertShop, weight]);
+      console.log('searching');
+      const similar = await db.getSimilarProducts([insertShop, weight]).catch(err => console.log(err));
 
+      console.log('fuse');
       const fuse = new Fuse(similar, this.#fuseOptions);
       let productsSimilar = fuse.search(product[1]);
+      console.log('fuse end');
       
       if (productsSimilar.length === 0) continue;
 
@@ -140,6 +144,7 @@ class MainService {
               : ''),
         })
       );
+      productIdsDbExisting.push(productsSimilar.map(({id}) => id));
       const additionalData = ((brand
         ? `, Brand: ${brand}`
         : '') + (weight
@@ -150,19 +155,24 @@ class MainService {
       productsForOpenAiApiShop2.push({name: product[1], additionalData, i: ''+productIds[i]});
     }
 
-    const results = await openAiApi.getCompletionChat(
-      productsForOpenAiApiShop1, productsForOpenAiApiShop2
-    );
-
-    for (const item of results.result) {
-      if (!productIdsTaken.includes(item.id) && productIds.includes(item.i)) {
-        ids.push({
-          id: item.i,
-          product_id: item.id,
-          update_needed: true,
-        });
-        productIdsTaken.push(item.id);
-        break;
+    if (productsForOpenAiApiShop2.length > 0) {
+      console.log('ai calling', productsForOpenAiApiShop1, productsForOpenAiApiShop2);
+      const results = await openAiApi.getCompletionChat(
+        productsForOpenAiApiShop1, productsForOpenAiApiShop2
+      );
+      console.log('a', results.result);
+  
+      for (const item of results.result) {
+        console.log('b', item);
+        if (item.id !== '' && !productIdsTaken.includes(item.id) && productIds.includes(Number(item.i)) && productIdsDbExisting.includes(Number(item.id))) {
+          console.log('c');
+          ids.push({
+            id: item.i,
+            product_id: item.id,
+            update_needed: true,
+          });
+          productIdsTaken.push(item.id);
+        }
       }
     }
 
@@ -170,6 +180,7 @@ class MainService {
   }
 
   async insertProductsData(insertProductsFormatter) {
+    console.log('insertProductsData');
     const [
       categoriesToInsert,
       categoriesObj,
@@ -179,9 +190,8 @@ class MainService {
     ] = insertProductsFormatter.getCategoriesAdditionalData();
     let { insertPriceData, insertFeatureData, insertProductData } =
       insertProductsFormatter.getInsertProductsData();
-    const rand = Math.random(0, 1);
-    console.log(insertProductData, 'insertProductsData length 1');
 
+    console.log('insertProductsData 1');
     for (const productArrayPlace of Object.keys(categoriesToInsert)) {
       const category = categoriesToInsert[productArrayPlace];
       let dbCategoryId = categoriesObj[insertShop][category.categoryId];
@@ -195,10 +205,10 @@ class MainService {
       }
       insertProductData[productArrayPlace][0] = dbCategoryId;
     }
-    console.log(insertProductData.length, 'insertProductsData length 2');
+    console.log('insertProductsData 2');
 
     const oldIds = await db.checkExistingIds(productIds, insertShop);
-    console.log(oldIds);
+    console.log('insertProductsData 3');
     const pricesUpdate1 = insertProductsFormatter.pickUpdates(oldIds).prices;
     console.log(insertProductData.length, 'insertProductsData length 4');
 
@@ -210,9 +220,10 @@ class MainService {
         insertProductsFormatter
       );
 
-    const pricesUpdate = pricesUpdate1.concat(pricesUpdate2);
+    console.log(pricesUpdate2, 'pricesUpdate2');
 
-    console.log(rand, 'insertProductsData');
+    const pricesUpdate = pricesUpdate1.concat(pricesUpdate2);
+    console.log('db.insertProductsData');
 
     await db.insertProductsData(pricesUpdate, featuresUpdate, {
       insertProductData,

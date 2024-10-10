@@ -12,14 +12,14 @@ Products from the first shop are provided in json array of objects, each contain
 Example of provided products from the first shop:
 [{id: '<id>', productName: '<productName-1>'}]
 
-Products from the second shop are provided in json array of objects, each containing name - <productName-2>, index of the product in shop 2 <i> and can also contain additional data like weight or brand. 
+Products from the second shop are provided in json array of objects, each containing name of product - <name-2>, index of the product of the second shop <i> and can also contain additional data like weight or brand. 
 Example of provided products from the second shop:
-[{name: '<productName-2>'}, additionalData: '<additionalData>', i: '<i>']
+[{name: '<name-2>'}, additionalData: '<additionalData>', i: '<i>']
 
 Example of result in json:
-{result: [{id: '<result>', productName: '<productName-2>', i: '<i>'}]}
+{result: [{id: '<result>', productName: '<name-2>', i: '<i>'}]}
 <result> may be either <id> - id from the first shop or empty string, if product from the second shop does not match to any of the products from the first shop. 
-<result> must not be equal to <i> - index from the second shop.
+<result> must not be equal to <i> - index from the second shop. <name-2> and <i> must be taken from one product of provided in the second shop.
 
 Weights for matched products have to be the same!
 If there are brands provided for both products, they have to be the same!
@@ -31,7 +31,7 @@ Product 1: "Заморожені креветки BlueSea, 300г"
 Product 2: "Креветки морські заморожені Deep Aqua 300 грамів"
 Do not match them as latin words are not in any way variation of the other.
 
-Provide object in result for every provided product from shop 2.
+Provide object in result for every provided product from the second shop.
 `;
 
 const OPENAI_MODEL = 'gpt-4o-mini';
