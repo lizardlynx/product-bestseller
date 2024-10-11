@@ -6,6 +6,10 @@ const dataFormatter = require('../database/dataFormatter.js');
 const InsertProductsFormatter = require('../dataFormatters/insertProductsFormatter.js');
 const openAiApi = require('./openAiApi.js');
 
+const { encoding_for_model } = require('tiktoken');
+const { MAX_INPUT_TOKENS, MAX_OUTPUT_TOKENS, OPENAI_MODEL, OPENAI_ASSISTANT_SYSTEM_PROMPT } = require('../constants.js');
+const gpt4Enc = encoding_for_model(OPENAI_MODEL);
+
 class MainService {
   #fuseOptions = {
     includeScore: true,
@@ -116,62 +120,104 @@ class MainService {
     const ids = [];
     const productIdsDbExisting = [];
     const productIdsTaken = [];
-    const productsForOpenAiApiShop1 = [];
-    const productsForOpenAiApiShop2 = [];
+    const productsForOpenAiApiShop1 = [[]];
+    const productsForOpenAiApiShop2 = [[]];
+    let k = 0;
+    const initialSystemTokens = gpt4Enc.encode(
+      OPENAI_ASSISTANT_SYSTEM_PROMPT
+    ).length;
+    let sum = initialSystemTokens;
+    let aprxOutputTokens = 0;
+
+    console.log('insertProductData', insertProductData);
     for (const i in insertProductData) {
       const product = insertProductData[i];
       const weight = product[5];
       const brand = product[6];
 
-      console.log('searching');
-      const similar = await db.getSimilarProducts([insertShop, weight]).catch(err => console.log(err));
+      const similar = await db.getSimilarProducts([insertShop, weight]);
 
-      console.log('fuse');
+      if (similar.length === 0) continue;
       const fuse = new Fuse(similar, this.#fuseOptions);
       let productsSimilar = fuse.search(product[1]);
-      console.log('fuse end');
-      
+
       if (productsSimilar.length === 0) continue;
 
-      const openAiProducts = productsSimilar.map(
-        ({item: product}) => ({
-          id: product.id + '',
-          productName:
-            product.title + (product.brand
-              ? `, Brand: ${product.brand}`
-              : '') + (product.weight_g
-              ? `, Weight: ${product.weight_g}`
-              : ''),
-        })
+      const openAiProducts = productsSimilar.map(({ item: product }) => ({
+        id: product.id + '',
+        productName:
+          product.title +
+          (product.brand ? `, Brand: ${product.brand}` : '') +
+          (product.weight_g ? `, Weight: ${product.weight_g}` : ''),
+      }));
+      productIdsDbExisting.push(
+        ...productsSimilar.map(({ item: { id } }) => id)
       );
-      productIdsDbExisting.push(productsSimilar.map(({id}) => id));
-      const additionalData = ((brand
-        ? `, Brand: ${brand}`
-        : '') + (weight
-        ? `, Weight: ${weight}`
-        : ''));
 
-      productsForOpenAiApiShop1.push(...openAiProducts)
-      productsForOpenAiApiShop2.push({name: product[1], additionalData, i: ''+productIds[i]});
+      const additionalData =
+        (brand ? `, Brand: ${brand}` : '') +
+        (weight ? `, Weight: ${weight}` : '');
+
+      const productShop2 = {
+        name: product[1],
+        additionalData,
+        i: '' + productIds[i],
+      };
+      let str1 = JSON.stringify(openAiProducts);
+      let str2 = JSON.stringify(productShop2);
+      const tokens1 = gpt4Enc.encode(str1).length;
+      const tokens2 = gpt4Enc.encode(str2).length;
+      const tokens = tokens1 + tokens2;
+      sum += tokens;
+      aprxOutputTokens += tokens2;
+
+      if (sum >= MAX_INPUT_TOKENS || aprxOutputTokens >= MAX_OUTPUT_TOKENS) {
+        k++;
+        sum = initialSystemTokens + tokens;
+        aprxOutputTokens = tokens2;
+      }
+
+      productsForOpenAiApiShop1[k].push(...openAiProducts);
+      productsForOpenAiApiShop2[k].push(productShop2);
     }
+    gpt4Enc.free();
 
-    if (productsForOpenAiApiShop2.length > 0) {
-      console.log('ai calling', productsForOpenAiApiShop1, productsForOpenAiApiShop2);
-      const results = await openAiApi.getCompletionChat(
-        productsForOpenAiApiShop1, productsForOpenAiApiShop2
-      );
-      console.log('a', results.result);
-  
-      for (const item of results.result) {
-        console.log('b', item);
-        if (item.id !== '' && !productIdsTaken.includes(item.id) && productIds.includes(Number(item.i)) && productIdsDbExisting.includes(Number(item.id))) {
-          console.log('c');
-          ids.push({
-            id: item.i,
-            product_id: item.id,
-            update_needed: true,
-          });
-          productIdsTaken.push(item.id);
+    for (const i in productsForOpenAiApiShop2) {
+      if (productsForOpenAiApiShop2[i].length > 0) {
+        console.log(
+          'ai calling',
+          productsForOpenAiApiShop1[i],
+          productsForOpenAiApiShop2[i]
+        );
+        const results = await openAiApi.getCompletionChat(
+          productsForOpenAiApiShop1[i],
+          productsForOpenAiApiShop2[i]
+        );
+        console.log('a', results.result);
+        console.log(productIdsTaken, productIds, productIdsDbExisting);
+
+        for (const item of results.result) {
+          console.log('b', item);
+          console.log(
+            item.id !== '',
+            !productIdsTaken.includes(item.id),
+            productIds.includes(Number(item.i)),
+            productIdsDbExisting.includes(Number(item.id))
+          );
+          if (
+            item.id !== '' &&
+            !productIdsTaken.includes(item.id) &&
+            productIds.includes(Number(item.i)) &&
+            productIdsDbExisting.includes(Number(item.id))
+          ) {
+            console.log('c');
+            ids.push({
+              id: item.i,
+              product_id: item.id,
+              update_needed: true,
+            });
+            productIdsTaken.push(item.id);
+          }
         }
       }
     }
@@ -209,27 +255,40 @@ class MainService {
 
     const oldIds = await db.checkExistingIds(productIds, insertShop);
     console.log('insertProductsData 3');
-    const pricesUpdate1 = insertProductsFormatter.pickUpdates(oldIds).prices;
+    const { prices: pricesUpdate1, features: featuresUpdate1 } =
+      insertProductsFormatter.pickUpdates(oldIds);
     console.log(insertProductData.length, 'insertProductsData length 4');
 
-    const { prices: pricesUpdate2, features: featuresUpdate } =
-      await this.#checkProductsForSimilarity(
-        insertProductData,
-        productIds,
-        insertShop,
-        insertProductsFormatter
-      );
-
-    console.log(pricesUpdate2, 'pricesUpdate2');
+    let pricesUpdate2 = [];
+    let featuresUpdate = [];
+    if (insertShop !== 1) {
+      try {
+        ({ prices: pricesUpdate2, features: featuresUpdate } =
+          await this.#checkProductsForSimilarity(
+            insertProductData,
+            productIds,
+            insertShop,
+            insertProductsFormatter
+          ));
+      } catch (err) {
+        console.log(err);
+      }
+      
+    }
 
     const pricesUpdate = pricesUpdate1.concat(pricesUpdate2);
-    console.log('db.insertProductsData');
 
-    await db.insertProductsData(pricesUpdate, featuresUpdate, {
-      insertProductData,
-      insertPriceData,
-      insertFeatureData,
-    });
+    try {
+      await db.insertProductsData(pricesUpdate, featuresUpdate, {
+        insertProductData,
+        insertPriceData,
+        insertFeatureData,
+      });
+    } catch (err) {
+      console.log(err);
+    }
+
+    // process.exit(0)
   }
 
   async getProductsByName(name) {

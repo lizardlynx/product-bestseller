@@ -182,8 +182,9 @@ class InsertProductsFormatter {
     const featuresUpdate = [];
     try {
       for (const id of ids) {
-        const shopId = id.id;
+        const shopId = id.id.toString();
         const dbId = id.product_id;
+        if(this.#idProductMatch[shopId] === undefined) continue;
         const i = this.#idProductMatch[shopId].toString();
         this.#insertProductData[i] = null;
         if (!this.#insertFeatureData[i]) continue; // fix it
@@ -208,7 +209,11 @@ class InsertProductsFormatter {
     } catch (err) {
       console.log(err);
     }
-    
+
+    console.log('this.#insertProductData', this.#insertProductData.length);
+    cleanArray(this.#insertProductData);
+    cleanArray(this.#insertFeatureData);
+    cleanArray(this.#insertPriceData);
 
     return { prices: pricesUpdate, features: featuresUpdate };
   }
@@ -217,10 +222,11 @@ class InsertProductsFormatter {
     const insertProductData = this.#insertProductData;
     const insertFeatureData = this.#insertFeatureData;
     const insertPriceData = this.#insertPriceData;
+    console.log('a');
     return {
-      insertProductData: JSON.parse(JSON.stringify(insertProductData)),
-      insertFeatureData: JSON.parse(JSON.stringify(insertFeatureData)),
-      insertPriceData: JSON.parse(JSON.stringify(insertPriceData)),
+      insertProductData,
+      insertFeatureData,
+      insertPriceData,
     };
   }
 }

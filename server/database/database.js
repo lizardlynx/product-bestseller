@@ -102,6 +102,7 @@ class Database {
     await this.#createConnection();
     const offset = itemsOnPage * (pageNumber - 1);
     const questionMarkString = this.#createQuestionMarkString(id);
+
     const [productCount, productCountField] = await this.#connection.query(
       queries.countProductsByCategory + questionMarkString,
       [...id]
@@ -266,6 +267,20 @@ class Database {
       matrix.flat(1)
     );
     promiseArr.push(request);
+  }
+
+  async getProductIdExists(options) {
+    await this.#createConnection();
+    const [rows, fields] = await this.#connection.query(queries.getProductIdExists, options);
+    this.#releaseConnection();
+    return rows
+  }
+
+  async getShopIs() {
+    await this.#createConnection();
+    const [rows, fields] = await this.#connection.query(queries.getShopIs);
+    this.#releaseConnection();
+    return rows
   }
 
   async insertProductsData(pricesUpdate, featuresUpdate, insertData) {

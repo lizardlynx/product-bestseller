@@ -35,5 +35,7 @@ Provide object in result for every provided product from the second shop.
 `;
 
 const OPENAI_MODEL = 'gpt-4o-mini';
+const MAX_OUTPUT_TOKENS = 16384;
+const MAX_INPUT_TOKENS = 128000;
 
-module.exports = {MS_IN_DAY, OPENAI_ASSISTANT_SYSTEM_PROMPT, OPENAI_MODEL};
+module.exports = {MS_IN_DAY, OPENAI_ASSISTANT_SYSTEM_PROMPT, OPENAI_MODEL, MAX_OUTPUT_TOKENS, MAX_INPUT_TOKENS};

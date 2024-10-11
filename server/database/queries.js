@@ -5,6 +5,12 @@ module.exports = {
       where a.shop_id = ? and a.shop_category_id = ?`,
   getParentDbId: `select db_id from shop_categories_match
       where shop_id=? and shop_category_id=?`,
+  getProductIdExists: `
+    select value, shop_id, product_id from features where title = 'id' and value = ?;
+  `,
+  getShopIs: `
+    select max(product_id) i, shop_id from features group by shop_id;
+  `,
   insertCategory:
     'insert into categories(title, parent_category_id) values (?, ?)',
   insertCategoryMatch:
@@ -25,7 +31,7 @@ module.exports = {
       values `,
   insertPrice: `insert into prices(product_id, shop_id, date, price, comment)
       values `,
-  insertFeatures: `insert into features(product_id, shop_id, title, value)
+  insertFeatures: `insert ignore into features(product_id, shop_id, title, value)
       values `,
   getProductsByCategory: `select p.id, p.category_id, p.title, p.description, p.image, p.country, p.weight_g, p.brand, count(f.shop_id) count from products p 
   left join features f
@@ -99,6 +105,7 @@ module.exports = {
   (select id from (select count(f.shop_id) count, p.id id from products p
   inner join features f
   on p.id = f.product_id
+  where f.title = 'id'
   group by p.id
   having count = 1) a)`, // p.brand = ? 
   getAllLists: `select distinct list_id, title from lists`,
