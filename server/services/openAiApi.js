@@ -5,8 +5,6 @@ const {z} = require('zod');
 require("dotenv").config()
 const {encoding_for_model} = require('tiktoken');
 
-const gpt4Enc = encoding_for_model(OPENAI_MODEL);
-
 const openai = new OpenAI({apiKey: process.env.OPENAI_API_KEY});
 const Product = z.object({
   id: z.string(),
@@ -23,6 +21,7 @@ class OpenAIApi {
     const str1 = JSON.stringify(productsShop1);
     const str2 = JSON.stringify(productsShop2);
     let sum = 0;
+    const gpt4Enc = encoding_for_model(OPENAI_MODEL);
     let encoded = gpt4Enc.encode(OPENAI_ASSISTANT_SYSTEM_PROMPT);
     sum += encoded.length;
     

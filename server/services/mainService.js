@@ -8,7 +8,6 @@ const openAiApi = require('./openAiApi.js');
 
 const { encoding_for_model } = require('tiktoken');
 const { MAX_INPUT_TOKENS, MAX_OUTPUT_TOKENS, OPENAI_MODEL, OPENAI_ASSISTANT_SYSTEM_PROMPT } = require('../constants.js');
-const gpt4Enc = encoding_for_model(OPENAI_MODEL);
 
 class MainService {
   #fuseOptions = {
@@ -123,6 +122,7 @@ class MainService {
     const productsForOpenAiApiShop1 = [[]];
     const productsForOpenAiApiShop2 = [[]];
     let k = 0;
+    const gpt4Enc = encoding_for_model(OPENAI_MODEL);
     const initialSystemTokens = gpt4Enc.encode(
       OPENAI_ASSISTANT_SYSTEM_PROMPT
     ).length;
