@@ -127,6 +127,7 @@ module.exports = {
     where p.comment='price' and p.product_id in `,
   selectFreeListId: `select MAX(list_id) + 1 as id from lists`,
   insertNewList: `insert into lists(list_id, product_id, title) values `,
+  //???
   getShopPricesByDate: `select DATE_ADD(DATE(b.date), INTERVAL 3 HOUR) as sumdate, sum(b.price) as sum, b.shop_id from (
       select count(DATE(date))/(1 + DATEDIFF(max(DATE(date)),min(DATE(date)))) expr, product_id as id from prices 
       where comment='price' and 
@@ -134,7 +135,6 @@ module.exports = {
         from products p
         inner join features f
         on p.id=f.product_id
-        where f.title = 'instock' and f.value='1'
         group by p.id, p.title
         having res=2) b) 
       group by product_id
@@ -152,7 +152,6 @@ module.exports = {
         from products p
         inner join features f
         on p.id=f.product_id
-        where f.title = 'instock' and f.value='1'
         group by p.id, p.title
         having res=2) b) a
       on p.product_id=a.product_id
@@ -163,7 +162,6 @@ module.exports = {
         from products p
         inner join features f
         on p.id=f.product_id
-        where f.title = 'instock' and f.value='1'
         group by p.id, p.title
         having res=2) b) a
       on p.product_id=a.product_id

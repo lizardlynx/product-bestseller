@@ -6,7 +6,7 @@ class Predictions {
     for (let i = points.length - 1; i >= period - 1; i--) {
       const periodPoints = points.slice(i - period + 1, i + 1);
       const sum = periodPoints.reduce((acc, curr) => acc + curr[1], 0);
-      result.push([points[i][0], sum / period]);
+      result.push([points[i][0], Number((sum / period).toFixed(2))]);
     }
     return result.reverse();
   }
@@ -43,14 +43,21 @@ class Predictions {
           acc += Math.max(0, pointsPrices[currIndex - 1] - curr);
           return acc;
         }, 0) / pointsPrices.length;
+      
+        let rsi = 0;
+      if (avgLoss == 0) {
+        rsi = 100;
+      } else {
+        rsi = 100 - (100 / (1 + (avgGain / avgLoss)));
+      }
 
-      const rsi = +(100 - 100 / (1 + avgGain / avgLoss)).toFixed(2);
-      result.push([points[i][0], rsi]);
+      const rsiRounded = Number(rsi.toFixed(2));
+      result.push([points[i][0], rsiRounded]);
     }
     return result;
   }
 
-  leastSquares(points, period = 14) {
+  #leastSquares(points) {
     const results = [];
     const n = points.length;
     let sumY = 0;
@@ -70,7 +77,7 @@ class Predictions {
     for (let i = 0; i < points.length; i++) {
       const x = points[i][0];
       const y = m * x + b;
-      results.push([x, y]);
+      results.push([x, Number(y.toFixed(2))]);
     }
     return results;
   }
@@ -78,16 +85,15 @@ class Predictions {
   // need to find best suited function by interpolation and extend it
   linearExtrapolation(points, period = 14) {
     const result = [];
-    const leastSquaresSet = this.leastSquares(points, period);
+    const leastSquaresSet = this.#leastSquares(points, period);
     const [set1, set2] = leastSquaresSet.slice(-2);
     result.push(...leastSquaresSet);
     const lastX = points[points.length - 1][0];
-    console.log(lastX);
     const k = (set2[1] - set1[1]) / (set2[0] - set1[0]);
     for (let i = 0; i < period; i++) {
       const x = lastX + MS_IN_DAY * (i + 1);
       const y = set1[1] + (x - set1[0]) * k;
-      result.push([x, y]);
+      result.push([x, Number(y.toFixed(2))]);
     }
     return result;
   }
@@ -95,7 +101,7 @@ class Predictions {
   // polynomial extrapolation
   // https://en.wikipedia.org/wiki/Neville's_algorithm
   // todo rewrite
-  getLagrangeInterpolationFunction(points) {
+  #getLagrangeInterpolationFunction(points) {
     const n = points.length - 1;
 
     const p = function (i, j, x) {
@@ -120,7 +126,7 @@ class Predictions {
 
   // for polynomial extrapolation (some strange results)
   lagrangeInterpolation(points, period = 14) {
-    const func = this.getLagrangeInterpolationFunction(points);
+    const func = this.#getLagrangeInterpolationFunction(points);
     const result = [];
     const lastX = points[points.length - 1][0];
     for (let i = 0; i < points.length + period; i++) {
@@ -129,7 +135,7 @@ class Predictions {
           ? lastX + MS_IN_DAY * (i - points.length + 1)
           : points[i][0];
       const y = func(x);
-      result.push([x, y]);
+      result.push([x, Number(y.toFixed(2))]);
     }
     return result;
   }
@@ -170,7 +176,7 @@ class Predictions {
     const lastX = points[points.length - 1][0];
     for (let i = 0; i < period; i++) {
       const x = lastX + MS_IN_DAY * (i + 1);
-      const y = +func(x).toFixed(2);
+      const y = Number(func(x).toFixed(2));
       result.push([x, y]);
     }
     return result;

@@ -12,6 +12,7 @@ const load = require('./routes/load.js');
 const shop = require('./routes/shop.js');
 const list = require('./routes/list.js');
 const { log } = require('console');
+const analysis = require('./routes/analysis.js');
 
 const build = (opts = {}) => {
   const app = fastify(opts);
@@ -32,6 +33,7 @@ const build = (opts = {}) => {
   app.register(load);
   app.register(shop);
   app.register(list);
+  app.register(analysis);
 
   app.setErrorHandler(function (error, request, reply) {
     this.log.error(error);

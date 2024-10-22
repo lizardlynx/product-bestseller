@@ -191,6 +191,19 @@ class DataFormatter {
     }
     return formattedData;
   }
+
+  formatMethodResult(data, method) {
+    const formattedData = {
+      name: method,
+      dates: [],
+      data: [],
+    };
+    for (const row of data) {
+      formattedData.dates.push(new Date(row[0]));
+      formattedData.data.push(row);
+    }
+    return formattedData;
+  }
 }
 
 module.exports = new DataFormatter();

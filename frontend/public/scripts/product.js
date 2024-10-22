@@ -51,15 +51,18 @@ function createProductHTML(product) {
   productDiv.innerHTML = html;
   const chartButtons = document.getElementsByClassName('tab-buttons')[0];
   const shopDivs = productDiv.getElementsByClassName('shop-name');
+  const predictionSettings = document.getElementsByClassName('p-settings');
   for (let shopDiv of shopDivs) {
     const shop = shopDiv.getAttribute('data-shop');
+    const title = dbShopsData[shop].title;
     const a = document.createElement('a');
     a.classList.add('shop-name');
     a.classList.add('shop-name-desc');
-    a.classList.add(dbShopsData[shop].title);
+    a.classList.add(title);
+    predictionSettings[0].innerHTML += `<option value="${shop}">${title}</option>`;
     a.setAttribute('title', 'Оригінальний товар');
     a.setAttribute('href', originalLinks[shop]);
-    a.innerText = dbShopsData[shop].title;
+    a.innerText = title;
     shopDiv.replaceWith(a);
     chartButtons.innerHTML += `<button class="tab-opener-button" data-ref="${shop}-container">${dbShopsData[shop].title} зміна ціни</button>`;
   }
@@ -125,6 +128,7 @@ async function loadPrices(productId) {
     chartHolder.classList.add('tab-holder', 'hidden');
     chartHolder.setAttribute('id', `price-compare-container`);
     chartsHolder.appendChild(chartHolder);
+    console.log('shopsPrices', shopsPrices);
     buildChart(
       'price-compare-container',
       'Порівняння цін',
@@ -138,10 +142,74 @@ async function loadPrices(productId) {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+async function loadMethods() {
+  const res = await fetch('/predictions/methods', {
+    method: 'GET',
+  });
+  if (!res.ok) return initError(await res.text());
+
+  const methods = await res.json();
+  const methodsSelect = document.getElementById('method-dropdown');
+  for (const [value, name] of Object.entries(methods)) {
+    methodsSelect.innerHTML += `<option value="${value}">${name}</option>`;
+  }
+}
+
+async function loadPredictions(productId) {
+  const method = document.getElementById('method-dropdown').value;
+  const shopId = document.getElementById('shop-dropdown').value;
+  const period = document.getElementById('period').value;
+  const res = await fetch('/predictions/' + method + '?' + new URLSearchParams({ id: productId, shopId, period, priceComment: 'price' }), {
+    method: 'GET',
+  });
+  if (!res.ok) return initError(await res.text());
+  const json = await res.json();
+
+  const periodInput = document.getElementById('period');
+  const predictionsWrapper = document.getElementsByClassName('predictions-wrapper')[0];
+  predictionsWrapper.classList.remove('hidden');
+
+  periodInput.setAttribute('min', json.period.min);
+
+  if (json.period.max === null) {
+    periodInput.removeAttribute('max');
+  } else {
+    periodInput.setAttribute('max', json.period.max);
+    if (period > json.period.max || period < json.period.min) {
+      periodInput.value = json.period.max ?? 10;
+    }
+  }
+
+
+
+  buildChart(
+    'predictions',
+    'Аналіз цін',
+    'shop',
+    'shop_url',
+    'Ціна, грн',
+    'травень-червень, 2023',
+    4,
+    json.chart
+  );
+  
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
   const pathname = new URL(location).pathname;
   const productId = pathname.split('/')[2];
 
-  loadProduct(productId);
-  loadPrices(productId);
+  await loadProduct(productId);
+  await loadPrices(productId);
+  await loadMethods();
+  await loadPredictions(productId);
+
+  [...document.getElementsByClassName('p-settings')].forEach(el => el.addEventListener('input', async () => {
+    await loadPredictions(productId);
+  }));
+
+  [...document.getElementsByClassName('p-settings')].forEach(el => el.addEventListener('click', async () => {
+    document.getElementById('predictions').classList.remove('hidden');
+  }));
+
 });

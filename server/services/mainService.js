@@ -8,6 +8,7 @@ const openAiApi = require('./openAiApi.js');
 
 const { encoding_for_model } = require('tiktoken');
 const { MAX_INPUT_TOKENS, MAX_OUTPUT_TOKENS, OPENAI_MODEL, OPENAI_ASSISTANT_SYSTEM_PROMPT } = require('../constants.js');
+const predictions = require('./predictions.js');
 
 class MainService {
   #fuseOptions = {
@@ -330,6 +331,7 @@ class MainService {
 
   async getShopPricesByDate() {
     const shopPricesByDate = await db.getShopPricesByDate();
+    console.log(shopPricesByDate);
     const formattedData =
       dataFormatter.formatShopPricesByDate(shopPricesByDate);
     return formattedData;

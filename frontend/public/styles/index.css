@@ -175,14 +175,17 @@ footer {
   display: none;
 }
 
+.p-settings,
 .tab-buttons {
   margin: 40px 0;
 }
 
+.p-settings,
 .tab-buttons .tab-opener-button {
   margin-right: 20px;
 }
 
+.p-settings,
 .tab-opener-button {
   padding: 10px;
   font-size: 15px;
@@ -192,6 +195,7 @@ footer {
   border-radius: 4px;
 }
 
+.p-settings:hover,
 .tab-opener-button:hover {
   color: #990000;
   cursor: pointer;
@@ -205,6 +209,8 @@ footer {
   margin-top: 50px;
 }
 
+#predictions.hidden,
+.predictions-wrapper.hidden,
 .tab-holder.hidden {
   display: none;
 }
