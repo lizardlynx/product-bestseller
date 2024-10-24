@@ -34,10 +34,16 @@ const product = (fastify, _, done) => {
     reply.type('text/html').send(JSON.stringify(products));
   });
 
+  fastify.get('/product/:id', async function (req, reply) {
+    const { id } = req.params;
+    const products = await mainService.getProductById(id);
+    reply.type('text/html').send(JSON.stringify(products));
+  });
+
   fastify.get('/products/:id/sma', async function (req, reply) {
     const { id } = req.params;
     const { dateStart, dateEnd } = req.query;
-    const prices = await mainService.getPricesData(id, {dateStart, dateEnd});
+    const prices = await mainService.getPricesData(id, { dateStart, dateEnd });
     const result = await predictionService.sma(prices);
     reply.type('text/html').send(JSON.stringify(result));
   });

@@ -7,7 +7,12 @@ const InsertProductsFormatter = require('../dataFormatters/insertProductsFormatt
 const openAiApi = require('./openAiApi.js');
 
 const { encoding_for_model } = require('tiktoken');
-const { MAX_INPUT_TOKENS, MAX_OUTPUT_TOKENS, OPENAI_MODEL, OPENAI_ASSISTANT_SYSTEM_PROMPT } = require('../constants.js');
+const {
+  MAX_INPUT_TOKENS,
+  MAX_OUTPUT_TOKENS,
+  OPENAI_MODEL,
+  OPENAI_ASSISTANT_SYSTEM_PROMPT,
+} = require('../constants.js');
 const predictions = require('./predictions.js');
 
 class MainService {
@@ -274,7 +279,6 @@ class MainService {
       } catch (err) {
         console.log(err);
       }
-      
     }
 
     const pricesUpdate = pricesUpdate1.concat(pricesUpdate2);
@@ -296,6 +300,11 @@ class MainService {
     const data = await db.getProductsByName(name);
     const formattedData = dataFormatter.formatSearchData(data);
     return formattedData;
+  }
+
+  async getProductById(id) {
+    const data = await db.getProductById(id);
+    return data;
   }
 
   async getAllLists() {

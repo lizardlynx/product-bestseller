@@ -48,6 +48,48 @@ module.exports = {
   order by CHAR_LENGTH(p.title) asc, count desc, p.title asc limit 10 offset 0`,
   getShopIdsByProduct: `select distinct product_id, shop_id from features
     where product_id in `,
+  getShopsByProductId: `select distinct f.product_id, f.shop_id id, s.title from features f
+    inner join shops s
+    on f.shop_id = s.id
+    where f.product_id = ?`,
+  selectProductsByMaxNum1: `
+    select product_id from (select product_id, count(*) num
+    from prices 
+    group by product_id
+    having num in (select max_num from (select max(num) max_num from
+    (select count(num) num_count, num from
+      (select product_id, count(*) num
+      from prices
+      where comment='price' and shop_id in 
+  `,
+  selectProductsByMaxNum2: `
+  group by product_id
+  order by num desc) a
+group by num
+order by num_count) b
+where num_count > 30) c)) r
+`,
+  selectDailyDiff1: `
+    select date, price, price - LAG(price) OVER (ORDER BY date(date)) AS difference
+    from (select distinct date(date) date, sum(price) price from prices where shop_id in
+  `,
+  selectDailyDiff2: `and comment='price' and product_id in (`,
+  selectDailyDiff3: `
+  )
+  group by date(date)
+  ) k`,
+  getPricesPerDay: `
+    select distinct date, avg(price)
+    from prices 
+    where comment='price' and shop_id =2
+
+    select distinct date(date), variance(price) price
+    from prices
+    where comment='price' and shop_id =2
+    group by date(date)
+    order by date(date) asc;
+  `,
+  getPricesPerDayOrderBy: ``,
   countProductsByCategory: `select count(*) count from products where category_id in `,
   getCategoryHierarchy: `with recursive cte as (
     select id, parent_category_id, title
@@ -90,7 +132,8 @@ module.exports = {
     'select shop_id, title, value from features where product_id = ?',
   getPricesData:
     'select shop_id, DATE_ADD(DATE(date), INTERVAL 3 HOUR) date, price, comment from prices where product_id = ?',
-  getPricesDataByDates: 'select shop_id, DATE_ADD(DATE(date), INTERVAL 3 HOUR) date, price, comment from prices where product_id = ? and (date between ? and ?)',
+  getPricesDataByDates:
+    'select shop_id, DATE_ADD(DATE(date), INTERVAL 3 HOUR) date, price, comment from prices where product_id = ? and (date between ? and ?)',
   getBrands: 'select * from brands',
   getCountry: 'select * from countries where title in ',
   checkExistingProductIds: `select f.value id, f.product_id, DATE(max(r.date)) <> CURDATE() update_needed from features f
@@ -107,7 +150,7 @@ module.exports = {
   on p.id = f.product_id
   where f.title = 'id'
   group by p.id
-  having count = 1) a)`, // p.brand = ? 
+  having count = 1) a)`, // p.brand = ?
   getAllLists: `select distinct list_id, title from lists`,
   getListById: `select p.id, p.title, l.title as list, r.price, r.shop_id, MAX(r.date) as date from lists l
     left join products p
@@ -170,6 +213,48 @@ module.exports = {
     where p1.d = p2.d
     ) a
     group by date`,
+  checkExistingApiTables: `
+      create table if not exists api(
+        id int auto_increment,
+        name varchar(100),
+        shortened varchar(30),
+        primary key(id),
+        unique(name)
+      );
+
+      create table if not exists api_value(
+        id int auto_increment,
+        api_id int,
+        date datetime,
+        value varchar(100),
+        primary key(id),
+        foreign key(api_id) references api(id)
+      );
+  `,
+  getValuesByApiName: `
+        select * 
+        from api a
+        inner join api_value av
+        on a.id = av.api_id
+        where a.name = ?
+  `,
+  getStartDate: `
+        select min(date) date from  prices;
+  `,
+  getApiIdByApiName: `
+    select * from api where name = ?`,
+  createApi: `
+    insert into api(name, shortened) values(?, ?);
+  `,
+  insertApiValues: `
+  insert into api_value(api_id, date, value) values 
+  `,
+  getByApi: `
+        select * from api a
+        inner join api_value av
+        on a.id = av.api_id
+        where a.name = ?
+  `,
   recreateDbQuery: `
       drop table if exists lists;
       drop table if exists shop_categories_match;
@@ -178,6 +263,25 @@ module.exports = {
       drop table if exists products;
       drop table if exists categories;
       drop table if exists shops;
+      drop table if exists api;
+      drop table if exists api_value;
+
+      create table if not exists api(
+        id int auto_increment,
+        name varchar(100),
+        shortened varchar(30),
+        primary key(id),
+        unique(name)
+      );
+
+      create table if not exists api_value(
+        id int auto_increment,
+        api_id int,
+        date datetime,
+        value varchar(100),
+        primary key(id),
+        foreign key(api_id) references api(id)
+      );
       
       create table categories(
         id int auto_increment,

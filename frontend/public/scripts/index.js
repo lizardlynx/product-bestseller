@@ -90,6 +90,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <a class="page-link" href="/admin.html">Адмінпанель</a>
         <a class="page-link" href="/lists.html">Списки</a>
         <a class="page-link" href="/analysis.html">Аналіз магазинів</a>
+        <a class="page-link" href="/prices.html">Аналіз цін</a>
         <div class="categories"></div>
         <div class="search-field">
           <input type="text" class="product-search" id="product-search" placeholder="Введіть продукт.." title="Введіть назву продукта">

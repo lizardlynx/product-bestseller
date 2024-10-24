@@ -54,9 +54,10 @@ class Database {
 
   async getPricesDataByDates(id) {
     await this.#createConnection();
-    const [rows, fields] = await this.#connection.query(queries.getPricesDataByDates, [
-      id,
-    ]);
+    const [rows, fields] = await this.#connection.query(
+      queries.getPricesDataByDates,
+      [id]
+    );
     this.#releaseConnection();
     return rows;
   }
@@ -169,15 +170,15 @@ class Database {
     const categoryKeyWords = splitCategories(category);
     let categoryExistsId = null;
     // if (shopId != 2) {
-      for (let item of categoryKeyWords) {
-        let res = categoriesAddedTemp[item];
-        if (!res) continue;
-        res = res.filter((item) => item != undefined);
-        if (res.length > 0) {
-          categoryExistsId = res[0];
-          break;
-        }
+    for (let item of categoryKeyWords) {
+      let res = categoriesAddedTemp[item];
+      if (!res) continue;
+      res = res.filter((item) => item != undefined);
+      if (res.length > 0) {
+        categoryExistsId = res[0];
+        break;
       }
+    }
     // }
 
     if (category == 'Продукти харчування' && shopId == 1) {
@@ -271,16 +272,19 @@ class Database {
 
   async getProductIdExists(options) {
     await this.#createConnection();
-    const [rows, fields] = await this.#connection.query(queries.getProductIdExists, options);
+    const [rows, fields] = await this.#connection.query(
+      queries.getProductIdExists,
+      options
+    );
     this.#releaseConnection();
-    return rows
+    return rows;
   }
 
   async getShopIs() {
     await this.#createConnection();
     const [rows, fields] = await this.#connection.query(queries.getShopIs);
     this.#releaseConnection();
-    return rows
+    return rows;
   }
 
   async insertProductsData(pricesUpdate, featuresUpdate, insertData) {
@@ -344,31 +348,55 @@ class Database {
       queries.getProductsByName,
       ['%' + name + '%']
     );
-    if (data.length == 0) return {data, shopIds: []};
+    if (data.length == 0) return { data, shopIds: [] };
     const ids = [];
-    data.forEach(row => ids.push(row.id));
+    data.forEach((row) => ids.push(row.id));
     const [shopIds, fields] = await this.#connection.query(
       queries.getShopIdsByProduct + this.#createQuestionMarkString(ids),
       ids
     );
     this.#releaseConnection();
-    return {data, shopIds};
+    return { data, shopIds };
+  }
+
+  async getProductById(id) {
+    this.#createConnection();
+    const [shopIds, fields] = await this.#connection.query(
+      queries.getShopsByProductId,
+      id
+    );
+    this.#releaseConnection();
+    return shopIds;
+  }
+
+  async selectDailyDiff(shopIds) {
+    this.#createConnection();
+    const [selectDailyDiff, fields] = await this.#connection.query(
+      queries.selectDailyDiff1 +
+        this.#createQuestionMarkString(shopIds) +
+        queries.selectDailyDiff2 +
+        queries.selectProductsByMaxNum1 +
+        this.#createQuestionMarkString(shopIds) +
+        queries.selectProductsByMaxNum2 +
+        queries.selectDailyDiff3,
+      [...shopIds, ...shopIds]
+    );
+    this.#releaseConnection();
+    return selectDailyDiff;
   }
 
   async getAllLists() {
     this.#createConnection();
-    const [data, field] = await this.#connection.query(
-      queries.getAllLists
-    );
+    const [data, field] = await this.#connection.query(queries.getAllLists);
     this.#releaseConnection();
     return data;
   }
 
   async getListById(id) {
     this.#createConnection();
-    const [data, field] = await this.#connection.query(
-      queries.getListById, [id]
-    );
+    const [data, field] = await this.#connection.query(queries.getListById, [
+      id,
+    ]);
     this.#releaseConnection();
     return data;
   }
@@ -376,10 +404,14 @@ class Database {
   async getListPrices(ids, allIds) {
     this.#createConnection();
     const [data, field] = await this.#connection.query(
-      queries.getListPrices + this.#createQuestionMarkString(ids) + queries.getListPricesGroupBy, ids
+      queries.getListPrices +
+        this.#createQuestionMarkString(ids) +
+        queries.getListPricesGroupBy,
+      ids
     );
     const [dataByShop, field2] = await this.#connection.query(
-      queries.getListPricesByShop + this.#createQuestionMarkString(allIds), allIds
+      queries.getListPricesByShop + this.#createQuestionMarkString(allIds),
+      allIds
     );
     this.#releaseConnection();
     return [data, dataByShop];
@@ -388,7 +420,7 @@ class Database {
   async selectFreeListId() {
     this.#createConnection();
     const [data, field] = await this.#connection.query(
-      queries.selectFreeListId,
+      queries.selectFreeListId
     );
     this.#releaseConnection();
     return data[0].id;
@@ -397,7 +429,8 @@ class Database {
   async insertNewList(list) {
     this.#createConnection();
     const [data, field] = await this.#connection.query(
-      queries.insertNewList + this.#createQuestionMarkSet(list, 3), list
+      queries.insertNewList + this.#createQuestionMarkSet(list, 3),
+      list
     );
     this.#releaseConnection();
     return data.id;
@@ -419,6 +452,73 @@ class Database {
     );
     this.#releaseConnection();
     return averageDifferenceByDate;
+  }
+
+  async checkExistingApiTables() {
+    this.#createConnection();
+    const [checkExistingApiTables, field2] = await this.#connection.query(
+      queries.checkExistingApiTables
+    );
+    this.#releaseConnection();
+    return checkExistingApiTables;
+  }
+
+  async getValuesByApiName(apiName) {
+    this.#createConnection();
+    const [getValuesByApiName, field2] = await this.#connection.query(
+      queries.getValuesByApiName,
+      [apiName]
+    );
+    this.#releaseConnection();
+    return getValuesByApiName;
+  }
+
+  async getApiIdByApiName(apiName) {
+    this.#createConnection();
+    const [getApiIdByApiName, field2] = await this.#connection.query(
+      queries.getApiIdByApiName,
+      [apiName]
+    );
+    this.#releaseConnection();
+    return getApiIdByApiName;
+  }
+
+  async insertApiValues(data) {
+    this.#createConnection();
+    const [insertApiValues, field2] = await this.#connection.query(
+      queries.insertApiValues + this.#createQuestionMarkSet(data),
+      data.flatMap((el) => el.flatMap((el) => el))
+    );
+    this.#releaseConnection();
+    return insertApiValues;
+  }
+
+  async createApi(apiName, currency) {
+    this.#createConnection();
+    const [createApi, field2] = await this.#connection.query(
+      queries.createApi,
+      [apiName, currency]
+    );
+    this.#releaseConnection();
+    return createApi;
+  }
+
+  async getStartDate() {
+    this.#createConnection();
+    const [getStartDate, field2] = await this.#connection.query(
+      queries.getStartDate
+    );
+    this.#releaseConnection();
+    return getStartDate;
+  }
+
+  async getByApi(apiName) {
+    this.#createConnection();
+    const [getByApi, field2] = await this.#connection.query(queries.getByApi, [
+      apiName,
+    ]);
+    this.#releaseConnection();
+    return getByApi;
   }
 }
 

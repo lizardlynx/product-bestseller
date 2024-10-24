@@ -9,9 +9,9 @@ const processError = (error, reply) => {
   reply.status(500).send('Server Error');
 };
 
-const datetime = () => {
+const datetime = (dateProvided = undefined) => {
   let date;
-  date = new Date();
+  date = dateProvided ?? new Date();
   date =
     date.getUTCFullYear() +
     '-' +
@@ -116,6 +116,12 @@ function cleanArray(arr) {
   }
 }
 
+function addDays(date, days) {
+  var result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
+
 module.exports = {
   delay,
   processError,
@@ -130,4 +136,5 @@ module.exports = {
   resolveFeatureValue,
   splitCategories,
   cleanArray,
+  addDays,
 };

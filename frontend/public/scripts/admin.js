@@ -34,6 +34,26 @@ async function loadProductsAuchan() {
   console.log(resJSON);
 }
 
+async function loadApiUsd() {
+  const res = await fetch('/api/bank/usd', {
+    method: 'GET',
+  });
+  if (!res.ok) return initError(await res.text());
+
+  const resJSON = await res.json();
+  console.log(resJSON);
+}
+
+async function loadApiEur() {
+  const res = await fetch('/api/bank/eur', {
+    method: 'GET',
+  });
+  if (!res.ok) return initError(await res.text());
+
+  const resJSON = await res.json();
+  console.log(resJSON);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   document
     .getElementById('auchan')
@@ -44,6 +64,13 @@ document.addEventListener('DOMContentLoaded', () => {
   document
     .getElementById('all')
     .addEventListener('click', () => loadShopData('all'));
-  document.getElementById('products-silpo').addEventListener('click', loadProductsSilpo);
-  document.getElementById('products-auchan').addEventListener('click', loadProductsAuchan);
+  document
+    .getElementById('products-silpo')
+    .addEventListener('click', loadProductsSilpo);
+  document
+    .getElementById('products-auchan')
+    .addEventListener('click', loadProductsAuchan);
+
+  document.getElementById('api-usd').addEventListener('click', loadApiUsd);
+  document.getElementById('api-eur').addEventListener('click', loadApiEur);
 });

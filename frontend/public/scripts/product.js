@@ -1,4 +1,4 @@
-import { buildChart } from './chart.js';
+import { buildChart } from './charts/chart.js';
 import { initError, insertBreadcrumbs, firstToUpper, openTab, dbShopsData } from './common.js';
 
 function createProductHTML(product) {

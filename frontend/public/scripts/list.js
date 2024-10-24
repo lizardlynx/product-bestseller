@@ -1,5 +1,5 @@
 import { initError, openTab, dbShopsData } from './common.js';
-import { buildChart } from './chart.js';
+import { buildChart } from './charts/chart.js';
 
 function updateColor(colorChange, id, updateColorArr = null) {
   const table = document.getElementById(id);

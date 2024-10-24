@@ -5,6 +5,8 @@ const mainService = require('../services/mainService.js');
 const { processError } = require('../common.js');
 const SilpoApi = require('../apiClasses/silpoApi.js');
 const AuchanApi = require('../apiClasses/auchanApi.js');
+const { BankGovUaApi } = require('../apiClasses/bankGovUaApi.js');
+const apiService = require('../services/apiService.js');
 
 async function promiseAllSettledRecordTimings(promises) {
   const startTime = new Date().getTime();
@@ -19,6 +21,16 @@ async function promiseAllSettledRecordTimings(promises) {
 }
 
 const load = (fastify, _, done) => {
+  fastify.get('/api/bank/usd', async function (req, reply) {
+    await apiService.insert('USD');
+    reply.status(204).send();
+  });
+
+  fastify.get('/api/bank/eur', async function (req, reply) {
+    await apiService.insert('EUR');
+    reply.status(204).send();
+  });
+
   fastify.post('/categories/auchan', async function (req, reply) {
     await mainService.recreateDatabase();
     const data = await new AuchanApi().loadCategories();
@@ -69,27 +81,29 @@ const load = (fastify, _, done) => {
     const shopIds = await mainService.getCategoriesIds();
 
     (async () => {
-      const idsSilpo = shopIds.reduce(
-        (acc, shopData) => {
-          if (!shopData.db_id == 1) return acc;
-          if (shopData.shop_id != 1) {
-            acc.push([shopData.shop_category_id, shopData.db_id]);
-          }
-          return acc;
-        },
-        []
-      );
+      const idsSilpo = shopIds.reduce((acc, shopData) => {
+        if (!shopData.db_id == 1) return acc;
+        if (shopData.shop_id != 1) {
+          acc.push([shopData.shop_category_id, shopData.db_id]);
+        }
+        return acc;
+      }, []);
 
       const silpoPromises = idsSilpo.map(async (ids) => {
         let data = {};
-        const insertProductsFormatter = mainService.getInsertProductsFormatter();
+        const insertProductsFormatter =
+          mainService.getInsertProductsFormatter();
         const [initialId, dbId] = ids;
-        const silpoApi = new SilpoApi()
+        const silpoApi = new SilpoApi();
         while (!('finished' in data)) {
           console.log('loop');
           data = await silpoApi.loadProductsByCategory(initialId);
           if (data.error) return processError(data.error, reply);
-          mainService.addSilpoProductsToQuery(data.data, dbId, insertProductsFormatter);
+          mainService.addSilpoProductsToQuery(
+            data.data,
+            dbId,
+            insertProductsFormatter
+          );
         }
         console.log('silpo inserting...');
         await mainService.insertProductsData(insertProductsFormatter);
@@ -113,23 +127,21 @@ const load = (fastify, _, done) => {
     const shopIds = await mainService.getCategoriesIds();
 
     (async () => {
-      const idsAuchan = shopIds.reduce(
-        (acc, shopData) => {
-          if (!shopData.db_id == 1) return acc;
-          if (shopData.shop_id == 1) {
-            acc.push([shopData.shop_category_id, shopData.db_id]);
-          }
-          return acc;
-        },
-        []
-      );
+      const idsAuchan = shopIds.reduce((acc, shopData) => {
+        if (!shopData.db_id == 1) return acc;
+        if (shopData.shop_id == 1) {
+          acc.push([shopData.shop_category_id, shopData.db_id]);
+        }
+        return acc;
+      }, []);
 
       const auchanPromises = idsAuchan.map(async (ids) => {
         let data = {};
-        const insertProductsFormatter = mainService.getInsertProductsFormatter();
+        const insertProductsFormatter =
+          mainService.getInsertProductsFormatter();
         const [initialId, dbId] = ids; //[5346, 12];//ids;
         // if (initialId != 5346) continue;
-        const auchanApi = new AuchanApi()
+        const auchanApi = new AuchanApi();
         while (!('finished' in data)) {
           data = await auchanApi.loadProductsByCategory([initialId]);
           if (data.error) return processError(data.error, reply);
@@ -137,7 +149,11 @@ const load = (fastify, _, done) => {
             console.log('here search was null');
             continue;
           }
-          mainService.addAuchanProductsToQuery(data.data, dbId, insertProductsFormatter);
+          mainService.addAuchanProductsToQuery(
+            data.data,
+            dbId,
+            insertProductsFormatter
+          );
         }
         console.log('auchan inserting...');
         await mainService.insertProductsData(insertProductsFormatter);
@@ -147,7 +163,7 @@ const load = (fastify, _, done) => {
       console.log('idsAuchan', idsAuchan);
 
       const { timings } = await promiseAllSettledRecordTimings([
-        Promise.allSettled(auchanPromises)
+        Promise.allSettled(auchanPromises),
       ]);
       console.log(
         `Execution time full download products: Auchan: ${timings[0]} ms`
