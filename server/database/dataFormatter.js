@@ -1,4 +1,5 @@
 'use strict';
+const { toISODate } = require('../common.js');
 const shopsFormatter = require('../dataFormatters/shopsFormatter.js');
 
 class DataFormatter {
@@ -137,6 +138,18 @@ class DataFormatter {
       ]);
     }
     return pricesByShop;
+  }
+
+  formatApiData(obj, datesUnformatted) {
+    const chart = [];
+    const dates = datesUnformatted.map((date) => toISODate(date));
+
+    for (const i in Object.entries(obj)) {
+      const [name, values] = Object.entries(obj)[i];
+      const data = values.map((val, j) => [datesUnformatted[j], val]);
+      chart.push({ name, dates, data });
+    }
+    return chart;
   }
 
   formatSearchData(search) {

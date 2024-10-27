@@ -43,12 +43,12 @@ class Predictions {
           acc += Math.max(0, pointsPrices[currIndex - 1] - curr);
           return acc;
         }, 0) / pointsPrices.length;
-      
-        let rsi = 0;
+
+      let rsi = 0;
       if (avgLoss == 0) {
         rsi = 100;
       } else {
-        rsi = 100 - (100 / (1 + (avgGain / avgLoss)));
+        rsi = 100 - 100 / (1 + avgGain / avgLoss);
       }
 
       const rsiRounded = Number(rsi.toFixed(2));
@@ -124,22 +124,6 @@ class Predictions {
     };
   }
 
-  // for polynomial extrapolation (some strange results)
-  lagrangeInterpolation(points, period = 14) {
-    const func = this.#getLagrangeInterpolationFunction(points);
-    const result = [];
-    const lastX = points[points.length - 1][0];
-    for (let i = 0; i < points.length + period; i++) {
-      const x =
-        i >= points.length
-          ? lastX + MS_IN_DAY * (i - points.length + 1)
-          : points[i][0];
-      const y = func(x);
-      result.push([x, Number(y.toFixed(2))]);
-    }
-    return result;
-  }
-
   #dividedDifferencePolynomial(points) {
     let [x0, y0] = points[0];
     let res = y0;
@@ -170,16 +154,39 @@ class Predictions {
     };
   }
 
-  newtonsDividedDifferences(points, period) {
-    const func = this.#dividedDifferencePolynomial(points);
-    const result = [...points];
-    const lastX = points[points.length - 1][0];
-    for (let i = 0; i < period; i++) {
-      const x = lastX + MS_IN_DAY * (i + 1);
-      const y = Number(func(x).toFixed(2));
-      result.push([x, y]);
-    }
+  #calcInterpolationPerDay(callback, points, period, date = null) {
+    const func = callback(points);
+    const result = [];
+    const firstX = date ? date.startTimestamp : points[0][0];
+    let x = firstX;
+    const endX = date
+      ? date.endTimestamp
+      : points[points.length - 1][0] + period * MS_IN_DAY;
+    do {
+      const y = func(x);
+      result.push([x, Number(y.toFixed(2))]);
+      x += MS_IN_DAY;
+    } while (x <= endX);
     return result;
+  }
+
+  // for polynomial extrapolation (some strange results)
+  lagrangeInterpolation(points, period, date = null) {
+    return this.#calcInterpolationPerDay(
+      this.#getLagrangeInterpolationFunction,
+      points,
+      period,
+      date
+    );
+  }
+
+  newtonsDividedDifferences(points, period, date = null) {
+    return this.#calcInterpolationPerDay(
+      this.#dividedDifferencePolynomial,
+      points,
+      period,
+      date
+    );
   }
 }
 

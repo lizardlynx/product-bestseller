@@ -1,4 +1,6 @@
+const { toISODate } = require('../common');
 const { API_NAME_USD, API_NAME_EUR } = require('../constants');
+const dataFormatter = require('../database/dataFormatter');
 const db = require('../database/database');
 const apiService = require('./apiService');
 const correlations = require('./correlations');
@@ -8,13 +10,35 @@ class CorrelationHeatmap {
   async get(productId, shopId = 'all') {
     const usd = await apiService.getByApi(API_NAME_USD);
     const eur = await apiService.getByApi(API_NAME_EUR);
+
     let shopPrice;
     let name;
+    let productsNum = 0;
+    let bigPriceChange = null;
     if (productId === 'daily-diff') {
-      shopPrice = (
-        await db.selectDailyDiff(shopId === 'all' ? [1, 2] : shopId)
-      ).map(({ date, difference }) => [date, +difference]);
+      shopId = shopId === 'all' ? [1, 2] : shopId;
+      ({
+        rows: shopPrice,
+        productsNum,
+        bigPriceChange,
+      } = await mainService.selectDailyDiff(shopId));
       name = 'Щоденна різниця';
+    } else if (productId === 'first-day-diff') {
+      shopId = shopId === 'all' ? [1, 2] : shopId;
+      ({
+        rows: shopPrice,
+        productsNum,
+        bigPriceChange,
+      } = await mainService.selectFirstDayDiff(shopId));
+      name = 'Різниця відносно початкового значення';
+    } else if (productId === 'avg-day') {
+      shopId = shopId === 'all' ? [1, 2] : shopId;
+      ({
+        rows: shopPrice,
+        productsNum,
+        bigPriceChange,
+      } = await mainService.selectAvgDay(shopId));
+      name = 'Середнє значення';
     } else {
       [shopPrice, name] = await this.#getShopPrices(productId, shopId);
     }
@@ -26,7 +50,9 @@ class CorrelationHeatmap {
       [name]: [],
     };
     for (const [date, val] of shopPrice) {
-      const dateDay = new Date(date).toISOString().split('T')[0];
+      const dateIso = toISODate(date);
+      const dateDay = dateIso.split('T')[0];
+      console.log(date, dateDay);
       const usdToday = +usd[dateDay];
       const eurToday = +eur[dateDay];
       if (!usdToday || !eurToday) continue;
@@ -52,7 +78,10 @@ class CorrelationHeatmap {
         ]);
       }
     }
-    return { matrix, elements };
+
+    console.log(values, dates);
+    const chart = dataFormatter.formatApiData(values, dates);
+    return { matrix, elements, chart, productsNum, bigPriceChange };
   }
 
   async #getShopPrices(productId, shopId) {

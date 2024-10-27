@@ -52,22 +52,45 @@ module.exports = {
     inner join shops s
     on f.shop_id = s.id
     where f.product_id = ?`,
+  selectPricesByDateWrap1: `
+    select p.product_id, avg(p.price) price, date(p.date) date, pr.title 
+    from prices p
+    inner join products pr
+    on p.product_id = pr.id
+    where p.price <> 99999 and p.comment = 'price' and p.shop_id in 
+    `,
+  selectPricesByDateWrap2: `and p.product_id in (`,
+  selectPricesByDateWrap3: `)
+  group by p.product_id, date, pr.title
+  order by p.product_id asc, date asc, price desc`,
   selectProductsByMaxNum1: `
-    select product_id from (select product_id, count(*) num
-    from prices 
-    group by product_id
-    having num in (select max_num from (select max(num) max_num from
-    (select count(num) num_count, num from
-      (select product_id, count(*) num
-      from prices
-      where comment='price' and shop_id in 
+    select product_id from (
+      select product_id, count(*) num
+      from prices 
+      where price <> 99999 and comment='price' and shop_id in
   `,
   selectProductsByMaxNum2: `
-  group by product_id
-  order by num desc) a
-group by num
-order by num_count) b
-where num_count > 30) c)) r
+      group by product_id
+      having num in (
+        select max_num 
+        from (
+          select max(num) max_num 
+          from (
+            select count(num) num_count, num 
+            from (
+              select product_id, count(*) num
+              from prices
+              where comment='price' and price<>99999 and shop_id in`,
+  selectProductsByMaxNum3: `
+              group by product_id
+            ) a
+            group by num
+            order by num_count
+          ) b
+          where num_count > 30
+        ) c
+      )
+    ) r
 `,
   selectDailyDiff1: `
     select date, price, price - LAG(price) OVER (ORDER BY date(date)) AS difference
@@ -171,22 +194,20 @@ where num_count > 30) c)) r
   selectFreeListId: `select MAX(list_id) + 1 as id from lists`,
   insertNewList: `insert into lists(list_id, product_id, title) values `,
   //???
-  getShopPricesByDate: `select DATE_ADD(DATE(b.date), INTERVAL 3 HOUR) as sumdate, sum(b.price) as sum, b.shop_id from (
-      select count(DATE(date))/(1 + DATEDIFF(max(DATE(date)),min(DATE(date)))) expr, product_id as id from prices 
-      where comment='price' and 
-      product_id in (select b.product_id from (select p.id as product_id, p.title, count(distinct f.shop_id) res 
-        from products p
-        inner join features f
-        on p.id=f.product_id
-        group by p.id, p.title
-        having res=2) b) 
-      group by product_id
-      having expr = 2) a
-    inner join prices b
-    on a.id = b.product_id
-    where b.comment='price' and b.price<>99999
-    group by sumdate, shop_id
-    order by sumdate asc, shop_id desc`,
+  getShopPricesByDate: `select DATE_ADD(DATE(b.date), INTERVAL 3 HOUR) as sumdate, sum(b.price) as sum, b.shop_id 
+  from (
+    select p.id as product_id, p.title, count(distinct f.shop_id) res 
+    from products p
+    inner join features f
+    on p.id=f.product_id
+    group by p.id, p.title
+    having res=2
+  ) a
+  inner join prices b
+  on a.product_id = b.product_id
+  where b.comment='price' and b.price<>99999
+  group by sumdate, shop_id
+  order by sumdate asc, shop_id desc`,
   selectAvgDiffByShopDate: `select AVG(diff) diff, DATE_ADD(d, INTERVAL 3 HOUR) date from (
     select (p1.price - p2.price) diff, p1.d, p1.product_id
     from (
@@ -239,8 +260,11 @@ where num_count > 30) c)) r
         where a.name = ?
   `,
   getStartDate: `
-        select min(date) date from  prices;
+        select date(min(date)) date from  prices;
   `,
+  getEndDate: `
+  select date(max(date)) date from  prices;
+`,
   getApiIdByApiName: `
     select * from api where name = ?`,
   createApi: `

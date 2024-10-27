@@ -10,13 +10,16 @@ export function buildChart(
   type = 'line'
 ) {
   Highcharts.chart(id, {
+    time: {
+      timezone: 'Europe/Kyiv',
+    },
     chart: {
       type,
       labels: {
         style: {
-            color: 'black'
-        }
-      }
+          color: 'black',
+        },
+      },
     },
     title: {
       text,
@@ -52,8 +55,9 @@ export function buildChart(
       verticalAlign: 'middle',
     },
     tooltip: {
-      pointFormat: '<span style="color:{series.color}">{series.name}</span>: {point.y:,.1f} грн<br/>',
-      split: true
+      pointFormat:
+        '<span style="color:{series.color}">{series.name}</span>: {point.y:,.1f} грн<br/>',
+      split: true,
     },
 
     plotOptions: {
@@ -66,9 +70,9 @@ export function buildChart(
       area: {
         stacking: 'normal',
         marker: {
-            enabled: false
-        }
-      }
+          enabled: false,
+        },
+      },
     },
 
     series,

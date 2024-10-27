@@ -31,26 +31,28 @@
   <div class="wrapper">
     <h2>Аналіз цін</h2>
     <div class="tab-buttons">
-      <button class="tab-opener-button" data-ref="chart-1">Calendar</button>
+      <!-- <button class="tab-opener-button" data-ref="chart-1">Calendar</button> -->
       <button class="tab-opener-button" data-ref="chart-2">Correlation heatmap</button>
     </div>
     <div id="chart-1" class="tab-holder hidden">
       <div id="chart-prices-diff-calendar"></div>
     </div>
     <div id="chart-2" class="tab-holder hidden">
-      <select name="product-corr" id="product-correlated">
+      <select class="p-settings" style="margin: 10px 0;" name="product-corr" id="product-correlated">
         <option value="product">Продукт</option>
-        <option value="diff">Середня зміна ціни на день</option>
+        <option value="diff">Зміна ціни на день</option>
       </select>
-      <select name="shop-cor" id="shop-product-correlated">
+      <select name="shop-cor" class="p-settings" style="margin: 10px 0;" id="shop-product-correlated">
         <option value="all">Всі</option>
         <option value="auchan">Ашан</option>
         <option value="silpo">Сільпо</option>
       </select>
       <div id="selector-supplement">
-        <input type="number" id="selector-supplement-data" name="period" min="1" value="5902"/>
+        <input type="number" class="p-settings" style="margin: 10px 0;" id="selector-supplement-data" name="period" min="1" value="5902"/>
       </div>
       <div id="chart-prices-correlation-heatmap"></div>
+      <div id="chart-prices-correlation" style="margin-top: 30px;"></div>
+      <div id="prices-percent-change" class="tab-buttons" style="margin-top: 30px;"></div>
     </div>
     
   </div>

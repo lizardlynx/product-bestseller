@@ -122,8 +122,38 @@ function addDays(date, days) {
   return result;
 }
 
+function toISODate(startDate) {
+  const date = new Date(startDate);
+  return new Date(
+    date.getTime() - date.getTimezoneOffset() * 60000
+  ).toISOString();
+}
+
+function getDate() {
+  return new Date().toLocaleString().split(',')[0];
+}
+
+function deleteExtraCache(prefix, object) {
+  const arr = []; // Array to hold the keys
+  // Iterate over and insert the keys that meet the condition into arr
+  for (let i = 0; i < Object.keys(object).length; i++) {
+    let key = Object.keys(object)[i];
+    if (key.substring(0, prefix.length) != prefix) {
+      arr.push(key);
+    }
+  }
+
+  // Iterate over arr and remove the items by key
+  for (let i = 0; i < arr.length; i++) {
+    delete object[i];
+  }
+}
+
 module.exports = {
+  getDate,
+  deleteExtraCache,
   delay,
+  toISODate,
   processError,
   datetime,
   logChunks,

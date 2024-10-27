@@ -1,7 +1,7 @@
 'use strict';
 const db = require('../database/database.js');
 const { BankGovUaApi } = require('../apiClasses/bankGovUaApi.js');
-const { addDays, datetime } = require('../common.js');
+const { addDays, datetime, toISODate } = require('../common.js');
 
 class ApiService {
   async insert(currency) {
@@ -41,7 +41,7 @@ class ApiService {
   async getByApi(apiName) {
     const rows = await db.getByApi(apiName);
     return rows.reduce((acc, { date, value }) => {
-      const dateStr = date.toISOString().split('T')[0];
+      const dateStr = toISODate(date).split('T')[0];
       acc[dateStr] = value;
       return acc;
     }, {});

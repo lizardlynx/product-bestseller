@@ -14,6 +14,7 @@ const {
   OPENAI_ASSISTANT_SYSTEM_PROMPT,
 } = require('../constants.js');
 const predictions = require('./predictions.js');
+const { toISODate, getDate, deleteExtraCache } = require('../common.js');
 
 class MainService {
   #fuseOptions = {
@@ -22,6 +23,7 @@ class MainService {
     ignoreLocation: true,
     keys: ['title'],
   };
+  #cacheSelectProductsByMaxNum = {};
 
   init(fastify) {
     this.#getShopsIds(fastify);
@@ -305,6 +307,122 @@ class MainService {
   async getProductById(id) {
     const data = await db.getProductById(id);
     return data;
+  }
+
+  async selectProductsByMaxNum(shopId) {
+    const prefix = getDate();
+    const key = [prefix, ...shopId].join(' | ');
+    deleteExtraCache(prefix, this.#cacheSelectProductsByMaxNum);
+    let result = this.#cacheSelectProductsByMaxNum[key];
+    if (result) return result;
+
+    const [{ date: endDate }] = await db.getEndDate();
+    const [{ date: startDate }] = await db.getStartDate();
+    const startTimestamp = new Date(startDate).getTime();
+    const endTimestamp = new Date(endDate).getTime();
+
+    const products = await db.selectProductsByMaxNum(shopId);
+    const productData = {};
+
+    for (const { product_id, price, date, title } of products) {
+      if (!productData.hasOwnProperty(product_id))
+        productData[product_id] = { price: [], title };
+      productData[product_id].price.push([new Date(date).getTime(), +price]);
+    }
+
+    for (const [product_id, data] of Object.entries(productData)) {
+      productData[product_id].price = predictions.lagrangeInterpolation(
+        data.price,
+        0,
+        {
+          startTimestamp,
+          endTimestamp,
+        }
+      );
+    }
+    this.#cacheSelectProductsByMaxNum[key] = productData;
+    return productData;
+  }
+
+  async #getDiffs(shopId) {
+    const products = await this.selectProductsByMaxNum(shopId);
+
+    const values = Object.values(products).map(({ price }) => price);
+    const bigPriceChange = {};
+    const matrix = Object.entries(products).map(([key, arr]) =>
+      arr.price.flatMap((el, index) => {
+        const priceCurr = +el[1];
+        if (index > 0) {
+          const pricePrev = +arr.price[index - 1][1];
+          const changePercent =
+            pricePrev === 0 ? 100 : ((priceCurr - pricePrev) * 100) / pricePrev;
+          if (Math.abs(changePercent) > 25) {
+            console.log(priceCurr, pricePrev, changePercent);
+            const date = toISODate(el[0]).split('T')[0];
+            if (!bigPriceChange.hasOwnProperty(date)) {
+              bigPriceChange[date] = [];
+            }
+            bigPriceChange[date].push({
+              product_id: key,
+              changePercent,
+              title: arr.title,
+            });
+          }
+        }
+
+        return +el[1];
+      })
+    );
+    let dates = values[0].map(([date, value]) => date);
+    const diffs = [];
+    for (let i = 0; i < matrix[0].length; i++) {
+      diffs[i] = 0;
+      let vals = [];
+      for (let j = 0; j < matrix.length; j++) {
+        diffs[i] += matrix[j][i];
+        vals.push(matrix[j][i]);
+      }
+    }
+    return { dates, diffs, bigPriceChange, values };
+  }
+
+  async selectAvgDay(shopId) {
+    const { dates, diffs, bigPriceChange, values } = await this.#getDiffs(
+      shopId
+    );
+    const rows = [];
+    for (let i = 0; i < diffs.length; i++) {
+      const diff = diffs[i] / values.length;
+      rows.push([dates[i], diff]);
+    }
+
+    return { rows, productsNum: values.length, bigPriceChange };
+  }
+
+  async selectFirstDayDiff(shopId) {
+    const { dates, diffs, bigPriceChange, values } = await this.#getDiffs(
+      shopId
+    );
+    const rows = [];
+    for (let i = 1; i < diffs.length; i++) {
+      const diff = diffs[i] - diffs[0];
+      rows.push([dates[i], diff]);
+    }
+
+    return { rows, productsNum: values.length, bigPriceChange };
+  }
+
+  async selectDailyDiff(shopId) {
+    const { dates, diffs, bigPriceChange, values } = await this.#getDiffs(
+      shopId
+    );
+    const rows = [];
+    for (let i = 1; i < diffs.length; i++) {
+      const diff = diffs[i] - diffs[i - 1];
+      rows.push([dates[i], diff]);
+    }
+
+    return { rows, productsNum: values.length, bigPriceChange };
   }
 
   async getAllLists() {

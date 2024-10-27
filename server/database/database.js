@@ -369,20 +369,40 @@ class Database {
     return shopIds;
   }
 
+  async selectProductsByMaxNum(shopIds) {
+    this.#createConnection();
+    const query =
+      queries.selectPricesByDateWrap1 +
+      this.#createQuestionMarkString(shopIds) +
+      queries.selectPricesByDateWrap2 +
+      queries.selectProductsByMaxNum1 +
+      this.#createQuestionMarkString(shopIds) +
+      queries.selectProductsByMaxNum2 +
+      this.#createQuestionMarkString(shopIds) +
+      queries.selectProductsByMaxNum3 +
+      queries.selectPricesByDateWrap3;
+    console.log(query);
+    const [res, fields] = await this.#connection.query(query, [
+      ...shopIds,
+      ...shopIds,
+      ...shopIds,
+    ]);
+    this.#releaseConnection();
+    return res;
+  }
+
   async selectDailyDiff(shopIds) {
     this.#createConnection();
     const [selectDailyDiff, fields] = await this.#connection.query(
       queries.selectDailyDiff1 +
         this.#createQuestionMarkString(shopIds) +
         queries.selectDailyDiff2 +
-        queries.selectProductsByMaxNum1 +
-        this.#createQuestionMarkString(shopIds) +
-        queries.selectProductsByMaxNum2 +
+        ids.map((el) => el.product_id).join(', ') +
         queries.selectDailyDiff3,
       [...shopIds, ...shopIds]
     );
     this.#releaseConnection();
-    return selectDailyDiff;
+    return { rows: selectDailyDiff, productsNum: ids.length };
   }
 
   async getAllLists() {
@@ -510,6 +530,15 @@ class Database {
     );
     this.#releaseConnection();
     return getStartDate;
+  }
+
+  async getEndDate() {
+    this.#createConnection();
+    const [getEndDate, field2] = await this.#connection.query(
+      queries.getEndDate
+    );
+    this.#releaseConnection();
+    return getEndDate;
   }
 
   async getByApi(apiName) {

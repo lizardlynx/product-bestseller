@@ -1,5 +1,5 @@
-import { initError, openTab, dbShopsData } from './common.js';
 import { buildChart } from './charts/chart.js';
+import { dbShopsData, initError, updateTabOpenerListeners } from './common.js';
 
 function updateColor(colorChange, id, updateColorArr = null) {
   const table = document.getElementById(id);
@@ -9,30 +9,46 @@ function updateColor(colorChange, id, updateColorArr = null) {
       const tr = table.querySelectorAll(`tbody>tr`)[i];
       const td = tr.querySelectorAll(`td[data-shop="${shop}"]`)[0];
       td.style.backgroundColor = 'green';
-    };
-    table.getElementsByClassName('full-price')[0].style.backgroundColor = 'green';
+    }
+    table.getElementsByClassName('full-price')[0].style.backgroundColor =
+      'green';
   } else {
     const tds = table.querySelectorAll(`td[data-shop="${colorChange}"]`);
     tds.forEach((td, index) => {
-      (updateColorArr.includes(index))?td.style.backgroundColor = 'green':null;
+      updateColorArr.includes(index)
+        ? (td.style.backgroundColor = 'green')
+        : null;
       console.log(index, updateColorArr.includes(index));
     });
   }
 }
 
 function recount(resJSON, type) {
-  const points = {0: ['*Результат - магазин де можна купити список товарів найдешевше;', '*Товари, яких немає в одному з магазинів, <b>виключаться</b> з розрахунку.'],
-                  1: ['*Результат - розрахунок найдешевшої вартості для списку продуктів;', '*Товари, яких немає в одному з магазинів, <b>не виключаться</b> з розрахунку.']}
+  const points = {
+    0: [
+      '*Результат - магазин де можна купити список товарів найдешевше;',
+      '*Товари, яких немає в одному з магазинів, <b>виключаться</b> з розрахунку.',
+    ],
+    1: [
+      '*Результат - розрахунок найдешевшої вартості для списку продуктів;',
+      '*Товари, яких немає в одному з магазинів, <b>не виключаться</b> з розрахунку.',
+    ],
+  };
 
   const list = document.getElementsByClassName('list')[0];
   const tabDiv = document.createElement('div');
-  tabDiv.innerHTML = `<p class="table-points">${points[+type].join('<br>')}</p>`;
+  tabDiv.innerHTML = `<p class="table-points">${points[+type].join(
+    '<br>'
+  )}</p>`;
   const tab = document.createElement('table');
-  tabDiv.setAttribute('id', 'table-'+type);
+  tabDiv.setAttribute('id', 'table-' + type);
   tabDiv.classList.add('tab-holder');
   tabDiv.classList.add('hidden');
   let shopsTH = '';
-  Object.entries(dbShopsData).forEach(shop => shopsTH += `<th class="shop-title" data-id="${shop[0]}">${shop[1].title}</th>`);
+  Object.entries(dbShopsData).forEach(
+    (shop) =>
+      (shopsTH += `<th class="shop-title" data-id="${shop[0]}">${shop[1].title}</th>`)
+  );
 
   const thead = document.createElement('thead');
   const tbody = document.createElement('tbody');
@@ -53,7 +69,7 @@ function recount(resJSON, type) {
     const id = Object.keys(resJSON)[key];
     const product = resJSON[id];
     let productTr = `<tr><td><a href="/products/${id}">${product.title}</a></td>`;
-    let minPrice = {price: Infinity, shop: null, shopI: null};
+    let minPrice = { price: Infinity, shop: null, shopI: null };
     const tableShopIgnore = product.tableShopIgnore;
     for (const [i, shopObj] of Object.entries(dbShopsData)) {
       const shop = shopObj.title;
@@ -62,20 +78,19 @@ function recount(resJSON, type) {
         productTr += `<td data-shop="${i}" title="Last updated ${product.shops[shop].date}">${price}</td>`;
         if (!(shop in priceTotal)) priceTotal[shop] = 0;
         if (minPrice.price > price) {
-          minPrice = {price, shop, shopI: i};
+          minPrice = { price, shop, shopI: i };
         }
         if (type == 0 && !tableShopIgnore) {
           priceTotal[shop] += price;
           if (!shopProductExists.includes(+key)) shopProductExists.push(+key);
         }
-      } 
-      else productTr += `<td data-shop="${i}">-</td>`;
+      } else productTr += `<td data-shop="${i}">-</td>`;
     }
     if (type == 1) {
       priceTotal[minPrice.shop] += minPrice.price;
-      cheapestArr.push(+(minPrice.shopI));
+      cheapestArr.push(+minPrice.shopI);
     }
-    productTr += `<td>${minPrice.shop?minPrice.shop:'-'}</td></tr>`;
+    productTr += `<td>${minPrice.shop ? minPrice.shop : '-'}</td></tr>`;
     tbody.innerHTML += productTr;
   }
 
@@ -96,20 +111,28 @@ function recount(resJSON, type) {
       shopProductExists.push(Object.keys(resJSON).length);
     }
   }
-  
+
   if (type == 0) {
     resTr += `<td>${minShop}</td>`;
     tbody.innerHTML += `<tr><td>Всього</td>${resTr}</tr>`;
-    updateColor(iShop, 'table-'+type, shopProductExists);
+    updateColor(iShop, 'table-' + type, shopProductExists);
   } else if (type == 1) {
-    resTr += `<td class="full-price">${Math.round(fullPrice * 100) / 100 }</td>`;
+    resTr += `<td class="full-price">${Math.round(fullPrice * 100) / 100}</td>`;
     tbody.innerHTML += `<tr><td>Всього</td>${resTr}</tr>`;
-    updateColor(cheapestArr, 'table-'+type);
+    updateColor(cheapestArr, 'table-' + type);
   }
-
 }
 
-function createChart(chartId, chartName, tabId, source, sourceLink, data, point = '', type = 'line') {
+function createChart(
+  chartId,
+  chartName,
+  tabId,
+  source,
+  sourceLink,
+  data,
+  point = '',
+  type = 'line'
+) {
   const listHolder = document.getElementsByClassName('list-holder')[0];
   const tabHolder = document.createElement('div');
   tabHolder.innerHTML = `<p class="table-points">${point}</p>`;
@@ -150,28 +173,41 @@ async function loadList(id) {
   <div class="list"></div>`;
   recount(resJSON.list.products, 0);
   recount(resJSON.list.products, 1);
-  const source = resJSON.prices.keys.map((shopId) => dbShopsData[shopId].title).join(', ');
-  const sourceLink = resJSON.prices.keys.map((shopId) => dbShopsData[shopId].product_url).join(', ');
+  const source = resJSON.prices.keys
+    .map((shopId) => dbShopsData[shopId].title)
+    .join(', ');
+  const sourceLink = resJSON.prices.keys
+    .map((shopId) => dbShopsData[shopId].product_url)
+    .join(', ');
 
-  createChart('price-compare-container', 'Порівняння вартостей', `chart-0`, 
-  source, sourceLink,
-  resJSON.prices.data, '*Графік порівняння вартостей <b>з виключенням</b> продуктів, яких немає в одному з магазинів');
+  createChart(
+    'price-compare-container',
+    'Порівняння вартостей',
+    `chart-0`,
+    source,
+    sourceLink,
+    resJSON.prices.data,
+    '*Графік порівняння вартостей <b>з виключенням</b> продуктів, яких немає в одному з магазинів'
+  );
 
   const buttons = document.getElementsByClassName('tab-buttons')[0];
-  for(const key of Object.keys(resJSON.byShop)) {
+  for (const key of Object.keys(resJSON.byShop)) {
     const shopName = dbShopsData[key].title.toString();
     const btn = `<button class="tab-opener-button" data-ref="chart-shop-tab-${key}">Динаміка зміни цін ${shopName}</button>`;
     buttons.innerHTML += btn;
-    createChart(`chart-shop-${key}`, 'Порівняння цін', `chart-shop-tab-${key}`,
-    shopName, dbShopsData[key].product_url,
-    Object.values(resJSON.byShop[key]), '*Графік порівняння вартостей, <b>без виключення</b> продуктів, яких немає в одному з магазинів', 'area'
+    createChart(
+      `chart-shop-${key}`,
+      'Порівняння цін',
+      `chart-shop-tab-${key}`,
+      shopName,
+      dbShopsData[key].product_url,
+      Object.values(resJSON.byShop[key]),
+      '*Графік порівняння вартостей, <b>без виключення</b> продуктів, яких немає в одному з магазинів',
+      'area'
     );
   }
 
-  const tableButtons = document.getElementsByClassName('tab-opener-button');
-  for (const btn of tableButtons) {
-    btn.addEventListener('click', openTab);
-  }
+  updateTabOpenerListeners();
 }
 
 document.addEventListener('DOMContentLoaded', () => {

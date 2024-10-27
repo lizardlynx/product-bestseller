@@ -5,7 +5,7 @@
 + decide what to do with process request
 - metatitle, metakeyword, metadescription auchan for product
 + format restApi responses
-- parallellism when load both?
++ parallellism when load both?
 - pipe
 - slugs
 + add limit to mysql queries
@@ -14,23 +14,26 @@
 + handle rest api status codes not ok (like in product.js file)
 + check if chart compare prices works and fix data, transfered to it
 
-- add usage of artificial intelligence to connect products
-- add price prediction!! (need data)
++ add usage of artificial intelligence to connect products
++ add price prediction!! (need data)
 
 - add related products
 - add card with discount -> calculate prices based 
 - include api count how to get to?
-- interpolation for data, where grabber failed
++ interpolation for data, where grabber failed
 - price comparing to dollar !
 - prediction with neural network
 
 - description why we do not use interpolation for prediction
-- extrapolating the interpolation cannot help us predict the pattern, and can get horribly wrong
+- extrapolating the interpolation cannot help us predict the pattern, and can get horribly wrong - it already does
 
-- Linear regression is used to model the relationship between one or more independent variables and a dependent variable. 
-- It aims to find the best-fitting line that describes the relationship within the existing data.
+o Linear regression is used to model the relationship between one or more independent variables and a dependent variable. 
+o It aims to find the best-fitting line that describes the relationship within the existing data.
 
 + Extrapolation is about predicting beyond existing data based on observed trends, while regression is about modeling and understanding the relationship between variables within the data.
 +  Polynomial extrapolation is typically done by means of Lagrange interpolation or using Newton's method of finite differences to create a Newton series that fits the data. 
 + Newton's Divided Differences
-- create correlation heatmap?
++ create correlation heatmap?
+
+- newton and lagrange interpolation broken??
+- fix prediction algorithm

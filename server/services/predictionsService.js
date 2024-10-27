@@ -17,8 +17,16 @@ class PredictionsService {
       pricesFormatted.push(shopPrices.data[i]);
     }
     const result = predictions[method](pricesFormatted, +period);
-    const periodMinMax = {min: 3, max: ['sma', 'ema', 'rsi'].includes(method) ? shopPrices.data.length - 1: null};
-    return {chart: [dataFormatter.formatMethodResult(result, method), shopPrices], period: periodMinMax};
+    const periodMinMax = {
+      min: 3,
+      max: ['sma', 'ema', 'rsi'].includes(method)
+        ? shopPrices.data.length - 1
+        : null,
+    };
+    return {
+      chart: [dataFormatter.formatMethodResult(result, method), shopPrices],
+      period: periodMinMax,
+    };
   }
 
   getMethods() {
