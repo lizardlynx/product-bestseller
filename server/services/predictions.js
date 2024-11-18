@@ -72,11 +72,11 @@ class Predictions {
       sumXSq += points[i][0] * points[i][0];
     }
 
-    const m = (n * sumXY - sumX * sumY) / (n * sumXSq - sumX * sumX);
-    const b = (sumY - m * sumX) / n;
+    const k = (n * sumXY - sumX * sumY) / (n * sumXSq - sumX * sumX);
+    const b = (sumY - k * sumX) / n;
     for (let i = 0; i < points.length; i++) {
       const x = points[i][0];
-      const y = m * x + b;
+      const y = k * x + b;
       results.push([x, Number(y.toFixed(2))]);
     }
     return results;
@@ -100,7 +100,6 @@ class Predictions {
 
   // polynomial extrapolation
   // https://en.wikipedia.org/wiki/Neville's_algorithm
-  // todo rewrite
   #getLagrangeInterpolationFunction(points) {
     const n = points.length - 1;
 

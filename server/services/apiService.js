@@ -2,40 +2,72 @@
 const db = require('../database/database.js');
 const { BankGovUaApi } = require('../apiClasses/bankGovUaApi.js');
 const { addDays, datetime, toISODate } = require('../common.js');
+const { HolidayApi } = require('../apiClasses/holidayApi.js');
 
 class ApiService {
   async insert(currency) {
     const apiName = `Курс по валюті ${currency}`;
+    return await this.#baseInsert(
+      apiName,
+      currency,
+      async (currValues, apiId) => {
+        const insertData = [];
+        if (currValues.length === 0) {
+          const [{ date: startDate }] = await db.getStartDate();
+          let currDate = new Date(startDate);
+          const endDate = new Date().toLocaleDateString();
+          do {
+            const dateFormat = currDate
+              .toLocaleDateString()
+              .split('/')
+              .reverse()
+              .join('');
+            const data = await new BankGovUaApi().load(currency, dateFormat);
+            insertData.push([apiId, datetime(currDate), data.rate]);
+            currDate = addDays(currDate, 1);
+          } while (currDate.toLocaleDateString() != endDate);
+        }
+
+        const data = await new BankGovUaApi().load(currency);
+        insertData.push([apiId, datetime(), data.rate]);
+        return insertData;
+      }
+    );
+  }
+
+  async #baseInsert(apiName, shortened, callback) {
     const api = await db.getApiIdByApiName(apiName);
     let apiId = api[0]?.id;
     if (!apiId) {
-      await db.createApi(apiName, currency);
+      await db.createApi(apiName, shortened);
       const api = await db.getApiIdByApiName(apiName);
       apiId = api[0].id;
     }
 
     const currValues = await db.getValuesByApiName(apiName);
-    const insertData = [];
-    if (currValues.length === 0) {
-      const [{ date: startDate }] = await db.getStartDate();
-      let currDate = new Date(startDate);
-      const endDate = new Date().toLocaleDateString();
-      do {
-        const dateFormat = currDate
-          .toLocaleDateString()
-          .split('/')
-          .reverse()
-          .join('');
-        const data = await new BankGovUaApi().load(currency, dateFormat);
-        insertData.push([apiId, datetime(currDate), data.rate]);
-        currDate = addDays(currDate, 1);
-      } while (currDate.toLocaleDateString() != endDate);
-    }
+    const insertData = await callback(currValues, apiId);
 
-    const data = await new BankGovUaApi().load(currency);
-    insertData.push([apiId, datetime(), data.rate]);
-
+    if (insertData.length === 0) return;
     await db.insertApiValues(insertData);
+  }
+
+  async insertHolidays() {
+    const apiName = `Свята`;
+    return await this.#baseInsert(
+      apiName,
+      apiName,
+      async (currValues, apiId) => {
+        const insertData = [];
+        console.log(currValues);
+        if (currValues.length === 0) {
+          const data = await new HolidayApi().load();
+          for (const el of data) {
+            insertData.push([apiId, datetime(new Date(el.date)), el.name]);
+          }
+        }
+        return insertData;
+      }
+    );
   }
 
   async getByApi(apiName) {

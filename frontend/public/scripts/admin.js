@@ -54,6 +54,16 @@ async function loadApiEur() {
   console.log(resJSON);
 }
 
+async function loadApiHolidays() {
+  const res = await fetch('/api/holidays', {
+    method: 'GET',
+  });
+  if (!res.ok) return initError(await res.text());
+
+  const resJSON = await res.json();
+  console.log(resJSON);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   document
     .getElementById('auchan')
@@ -73,4 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('api-usd').addEventListener('click', loadApiUsd);
   document.getElementById('api-eur').addEventListener('click', loadApiEur);
+  document
+    .getElementById('api-holidays')
+    .addEventListener('click', loadApiHolidays);
 });

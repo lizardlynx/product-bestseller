@@ -31,6 +31,11 @@ const load = (fastify, _, done) => {
     reply.status(204).send();
   });
 
+  fastify.get('/api/holidays', async function (req, reply) {
+    await apiService.insertHolidays();
+    reply.status(204).send();
+  });
+
   fastify.post('/categories/auchan', async function (req, reply) {
     await mainService.recreateDatabase();
     const data = await new AuchanApi().loadCategories();

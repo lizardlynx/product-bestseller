@@ -38,3 +38,9 @@ o It aims to find the best-fitting line that describes the relationship within t
 - newton and lagrange interpolation broken??
 - fix prediction algorithm
 - broken list - fix it
++ add api school holidays
++ add api https://holidayapi.com/countries/ua/2022
+- add weather api https://open-meteo.com/
+
+- do smth with new apis
+
