@@ -331,16 +331,19 @@ class MainService {
     }
 
     for (const [product_id, data] of Object.entries(productData)) {
-      productData[product_id].price = predictions.lagrangeInterpolation(
-        data.price,
-        0,
-        {
+      console.log(product_id);
+
+      // choose interpolation here
+      // do not use interpolation at all? as it is faulty
+      productData[product_id].price = [
+        ...predictions.lagrangeInterpolation(data.price, 0, {
           startTimestamp,
           endTimestamp,
-        }
-      );
+        }),
+      ];
+      console.log('dataprice', productData[product_id].price);
     }
-    this.#cacheSelectProductsByMaxNum[key] = productData;
+    // this.#cacheSelectProductsByMaxNum[key] = productData;
     return productData;
   }
 
@@ -349,15 +352,16 @@ class MainService {
 
     const values = Object.values(products).map(({ price }) => price);
     const bigPriceChange = {};
+
     const matrix = Object.entries(products).map(([key, arr]) =>
       arr.price.flatMap((el, index) => {
         const priceCurr = +el[1];
         if (index > 0) {
-          const pricePrev = +arr.price[index - 1][1];
+          const elPrev = arr.price[index - 1];
+          const pricePrev = +elPrev[1];
           const changePercent =
             pricePrev === 0 ? 100 : ((priceCurr - pricePrev) * 100) / pricePrev;
           if (Math.abs(changePercent) > 25) {
-            console.log(priceCurr, pricePrev, changePercent);
             const date = toISODate(el[0]).split('T')[0];
             if (!bigPriceChange.hasOwnProperty(date)) {
               bigPriceChange[date] = [];
@@ -369,18 +373,16 @@ class MainService {
             });
           }
         }
-
         return +el[1];
       })
     );
     let dates = values[0].map(([date, value]) => date);
+
     const diffs = [];
     for (let i = 0; i < matrix[0].length; i++) {
       diffs[i] = 0;
-      let vals = [];
       for (let j = 0; j < matrix.length; j++) {
         diffs[i] += matrix[j][i];
-        vals.push(matrix[j][i]);
       }
     }
     return { dates, diffs, bigPriceChange, values };
@@ -470,6 +472,80 @@ class MainService {
       averageDifferenceByDate
     );
     return formattedAvgDiff;
+  }
+
+  async disconnectProducts(productId) {
+    const product = await db.getProductData(productId);
+    console.log(product);
+
+    // await db.disconnectProducts(productId);
+  }
+
+  async connectProducts(productId, productId2) {
+    const [product] = await db.getProductById(productId);
+    const [product2] = await db.getProductById(productId2);
+
+    console.log(product, product2);
+
+    if (product.id === product2.id) {
+      console.log('Products must be different', {
+        product: product.id,
+        product2: product2.id,
+        productId,
+        productId2,
+      });
+      return; // throw error
+    }
+    const prices2 = await db.getPricesById(productId2);
+    const features2 = await db.getFeaturesById(productId2);
+    const features1 = await db.getFeaturesById(productId);
+
+    console.log(prices2, features2);
+
+    const shops2 = [
+      ...new Set(features2.map((feature) => feature.shop_id)),
+    ].sort();
+    const shops1 = [
+      ...new Set(features1.map((feature) => feature.shop_id)),
+    ].sort();
+    // on new shop import change logic
+    if (shops2.length === 2 || shops1.length === 2) {
+      console.log('Product must exist only in one shop');
+      return; // throw error
+    }
+    if (shops2.join(',') === shops1.join(',')) {
+      console.log('Shops in which product exist must be different');
+      return; // throw error
+    }
+
+    const delta = [
+      product2.description
+        ? product.description ?? '' + product2.description
+        : product.description,
+      product2.weight_g
+        ? product.weight_g ?? '' + product2.weight_g
+        : product.weight_g,
+    ];
+
+    await db.insertPriceData(
+      prices2.map(({ shop_id, date, price, comment }) => [
+        shop_id,
+        date,
+        price,
+        comment,
+        productId,
+      ])
+    );
+    await db.insertFeatureData(
+      features2.map(({ shop_id, title, value }) => [
+        shop_id,
+        title,
+        value,
+        productId,
+      ])
+    );
+    await db.updateProduct(productId, ...delta);
+    await db.deleteProductData(productId2);
   }
 }
 

@@ -153,8 +153,13 @@ module.exports = {
     where a.shop_id=b.shop_id and a.comment=b.comment and b.product_id=a.product_id`,
   getFeaturesByProduct:
     'select shop_id, title, value from features where product_id = ?',
+  deletePricesByProduct: `delete from prices where product_id = ?`,
+  deleteFeaturesByProduct: `delete from features where product_id = ?`,
+  deleteProduct: `delete from products where id = ?`,
   getPricesData:
     'select shop_id, DATE_ADD(DATE(date), INTERVAL 3 HOUR) date, price, comment from prices where product_id = ?',
+  getPricesById: 'select * from prices where product_id = ?',
+  getFeaturesById: 'select * from features where product_id = ?',
   getPricesDataByDates:
     'select shop_id, DATE_ADD(DATE(date), INTERVAL 3 HOUR) date, price, comment from prices where product_id = ? and (date between ? and ?)',
   getBrands: 'select * from brands',
@@ -208,6 +213,14 @@ module.exports = {
   where b.comment='price' and b.price<>99999
   group by sumdate, shop_id
   order by sumdate asc, shop_id desc`,
+  disconnectProducts: `
+
+  `,
+  updateProduct: `
+    update products set description = ?, weight_g = ? where id = ?;
+  `,
+  insertPriceData: `insert into prices(shop_id, date, price, comment, product_id) values `,
+  insertFeatureData: `insert into features(shop_id, title, value, product_id) values `,
   selectAvgDiffByShopDate: `select AVG(diff) diff, DATE_ADD(d, INTERVAL 3 HOUR) date from (
     select (p1.price - p2.price) diff, p1.d, p1.product_id
     from (
@@ -261,6 +274,13 @@ module.exports = {
   `,
   getStartDate: `
         select date(min(date)) date from  prices;
+  `,
+  getBankDates: `
+  select date(date) date
+   from api_value av
+   inner join api a
+   on a.id = av.api_id
+    where a.shortened = ?;
   `,
   getEndDate: `
   select date(max(date)) date from  prices;

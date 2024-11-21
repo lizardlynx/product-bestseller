@@ -52,6 +52,25 @@ class Database {
     return rows;
   }
 
+  async getPricesById(id) {
+    await this.#createConnection();
+    const [rows, fields] = await this.#connection.query(queries.getPricesById, [
+      id,
+    ]);
+    this.#releaseConnection();
+    return rows;
+  }
+
+  async getFeaturesById(id) {
+    await this.#createConnection();
+    const [rows, fields] = await this.#connection.query(
+      queries.getFeaturesById,
+      [id]
+    );
+    this.#releaseConnection();
+    return rows;
+  }
+
   async getPricesDataByDates(id) {
     await this.#createConnection();
     const [rows, fields] = await this.#connection.query(
@@ -138,6 +157,16 @@ class Database {
     return [products, prices, features, productCount];
   }
 
+  async getProductById(id) {
+    await this.#createConnection();
+    const [products, productsFields] = await this.#connection.query(
+      queries.getProduct,
+      [id]
+    );
+    this.#releaseConnection();
+    return products[0];
+  }
+
   async getProductData(id) {
     await this.#createConnection();
     const [products, productsFields] = await this.#connection.query(
@@ -155,6 +184,15 @@ class Database {
 
     this.#releaseConnection();
     return [products, prices, features];
+  }
+
+  async deleteProductData(id) {
+    await this.#createConnection();
+    await this.#connection.query(queries.deletePricesByProduct, [id]);
+    await this.#connection.query(queries.deleteFeaturesByProduct, [id]);
+    await this.#connection.query(queries.deleteProduct, [id]);
+
+    this.#releaseConnection();
   }
 
   async insertCategory(
@@ -254,10 +292,10 @@ class Database {
       '(' + new Array(elementLength).fill('?').join(', ') + ')';
     const questionMarksSets = new Array(
       insertLen ? matrix.flat(1).length / insertLen : matrix.length
-    )
-      .fill(questionMarks)
-      .join(', ');
-    return questionMarksSets;
+    ).fill(questionMarks);
+    console.log(questionMarksSets.length);
+
+    return questionMarksSets.join(', ');
   }
 
   #addQueryInsertData(matrix, query, promiseArr, insertLen = null) {
@@ -474,6 +512,44 @@ class Database {
     return averageDifferenceByDate;
   }
 
+  async disconnectProducts(productId) {
+    this.#createConnection();
+    await this.#connection.query(queries.disconnectProducts, [productId]);
+    this.#releaseConnection();
+  }
+
+  async updateProduct(productId, description, weight_g) {
+    this.#createConnection();
+    await this.#connection.query(queries.updateProduct, [
+      description,
+      weight_g,
+      productId,
+    ]);
+    this.#releaseConnection();
+  }
+
+  async insertPriceData(prices) {
+    this.#createConnection();
+    console.log(prices, prices.length);
+    console.log(this.#createQuestionMarkSet(prices));
+
+    await this.#connection.query(
+      queries.insertPriceData + this.#createQuestionMarkSet(prices),
+      prices.flatMap((price) => price)
+    );
+    this.#releaseConnection();
+    // process.exit(0);
+  }
+
+  async insertFeatureData(features) {
+    this.#createConnection();
+    await this.#connection.query(
+      queries.insertFeatureData + this.#createQuestionMarkSet(features),
+      features.flatMap((feature) => feature)
+    );
+    this.#releaseConnection();
+  }
+
   async checkExistingApiTables() {
     this.#createConnection();
     const [checkExistingApiTables, field2] = await this.#connection.query(
@@ -530,6 +606,16 @@ class Database {
     );
     this.#releaseConnection();
     return getStartDate;
+  }
+
+  async getBankDates(apiId) {
+    this.#createConnection();
+    const [getBankDates, field2] = await this.#connection.query(
+      queries.getBankDates,
+      [apiId]
+    );
+    this.#releaseConnection();
+    return getBankDates;
   }
 
   async getEndDate() {

@@ -43,6 +43,8 @@ class CorrelationHeatmap {
       [shopPrice, name] = await this.#getShopPrices(productId, shopId);
     }
 
+    console.log(shopPrice, productId);
+
     const dates = [];
     const values = {
       usd: [],
@@ -50,6 +52,8 @@ class CorrelationHeatmap {
       [name]: [],
     };
     for (const [date, val] of shopPrice) {
+      console.log(date, val);
+
       const dateIso = toISODate(date);
       const dateDay = dateIso.split('T')[0];
       console.log(date, dateDay);
@@ -97,6 +101,8 @@ class CorrelationHeatmap {
     const shopPrice1 = priceData['1']?.find((el) => el.name === 'price');
     const shopPrice2 = priceData['2']?.find((el) => el.name === 'price');
 
+    console.log(shopPrice1, shopPrice2);
+
     let shopPrice = [];
     if (shopId === 'all') {
       if (shopPrice1 && shopPrice2) {
@@ -121,7 +127,8 @@ class CorrelationHeatmap {
         throw new Error('Price does not exist for this shop');
       }
 
-      shopPrice.push(...(+shopId === 1 ? shopPrice1 : shopPrice2).data);
+      const shopPriceData = (+shopId === 1 ? shopPrice1 : shopPrice2).data;
+      shopPrice.push(...shopPriceData);
     }
     return [shopPrice, name];
   }

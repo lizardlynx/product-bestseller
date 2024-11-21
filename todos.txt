@@ -43,4 +43,5 @@ o It aims to find the best-fitting line that describes the relationship within t
 - add weather api https://open-meteo.com/
 
 - do smth with new apis
+- disconnect products
 

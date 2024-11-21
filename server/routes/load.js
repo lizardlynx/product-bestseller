@@ -21,13 +21,9 @@ async function promiseAllSettledRecordTimings(promises) {
 }
 
 const load = (fastify, _, done) => {
-  fastify.get('/api/bank/usd', async function (req, reply) {
-    await apiService.insert('USD');
-    reply.status(204).send();
-  });
-
-  fastify.get('/api/bank/eur', async function (req, reply) {
+  fastify.get('/api/bank', async function (req, reply) {
     await apiService.insert('EUR');
+    await apiService.insert('USD');
     reply.status(204).send();
   });
 

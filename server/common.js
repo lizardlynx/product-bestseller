@@ -10,21 +10,11 @@ const processError = (error, reply) => {
 };
 
 const datetime = (dateProvided = undefined) => {
-  let date;
-  date = dateProvided ?? new Date();
-  date =
-    date.getUTCFullYear() +
-    '-' +
-    ('00' + (date.getUTCMonth() + 1)).slice(-2) +
-    '-' +
-    ('00' + date.getUTCDate()).slice(-2) +
-    ' ' +
-    ('00' + date.getUTCHours()).slice(-2) +
-    ':' +
-    ('00' + date.getUTCMinutes()).slice(-2) +
-    ':' +
-    ('00' + date.getUTCSeconds()).slice(-2);
-  return date;
+  let date = dateProvided ?? new Date();
+  const dateWithOffest = new Date(
+    date.getTime() - date.getTimezoneOffset() * 60000
+  );
+  return dateWithOffest.toISOString().slice(0, 19).replace('T', ' ');
 };
 
 async function logChunks(readable) {
@@ -124,9 +114,10 @@ function addDays(date, days) {
 
 function toISODate(startDate) {
   const date = new Date(startDate);
-  return new Date(
-    date.getTime() - date.getTimezoneOffset() * 60000
-  ).toISOString();
+  const currTime = date.getTime();
+  const offset = date.getTimezoneOffset() * 60000;
+  const resultDate = new Date(currTime - offset);
+  return resultDate.toISOString();
 }
 
 function getDate() {

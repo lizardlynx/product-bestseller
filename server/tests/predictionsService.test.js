@@ -266,7 +266,9 @@ describe('predictionsService class', () => {
       '2',
       'price'
     );
-    expect(result[0].data).toEqual([
+    console.dir(result, { depth: null });
+
+    expect(result.chart[0].data).toEqual([
       [1729209600000, 89.39],
       [1729296000000, 86.19],
       [1729382400000, 82.99],

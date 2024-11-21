@@ -5,6 +5,7 @@ export function initError(message) {
   const errorHolder = document.getElementsByClassName('error-holder')[0];
   errorHolder.classList.add('filled');
   errorHolder.innerText = message;
+  return false;
 }
 
 export function clearError() {

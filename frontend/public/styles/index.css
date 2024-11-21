@@ -176,16 +176,19 @@ footer {
   display: none;
 }
 
+.standard-button,
 .p-settings,
 .tab-buttons {
   margin: 40px 0;
 }
 
+.standard-button,
 .p-settings,
 .tab-buttons [class*='tab-opener-button'] {
   margin-right: 20px;
 }
 
+.standard-button,
 .p-settings,
 [class*='tab-opener-button'] {
   padding: 10px;
@@ -196,6 +199,7 @@ footer {
   border-radius: 4px;
 }
 
+.standard-button:hover,
 .p-settings:hover,
 [class*='tab-opener-button']:hover {
   color: #990000;

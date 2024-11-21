@@ -1,5 +1,38 @@
 import { buildChart } from './charts/chart.js';
-import { initError, insertBreadcrumbs, firstToUpper, openTab, dbShopsData } from './common.js';
+import {
+  dbShopsData,
+  firstToUpper,
+  initError,
+  insertBreadcrumbs,
+  openTab,
+} from './common.js';
+
+async function disconnectProducts(productId) {
+  if (!confirm("Ви впевнені, що хочете роз'єднати товари?")) {
+    return;
+  }
+  const res = await fetch('/products/' + productId + '/disconnect', {
+    method: 'POST',
+  });
+  if (!res.ok) return initError(await res.text());
+
+  // location.reload();
+}
+
+async function connectProducts(productId) {
+  if (!confirm('Ви впевнені, що хочете поєднати товари?')) {
+    return;
+  }
+  const inputProductId = document.getElementById('matchable-product').value;
+  await fetch('/products/connect', {
+    method: 'POST',
+    body: JSON.stringify({
+      productId,
+      productId2: inputProductId,
+    }),
+  });
+  location.reload();
+}
 
 function createProductHTML(product) {
   const productDiv = document.createElement('div');
@@ -8,9 +41,16 @@ function createProductHTML(product) {
   let html = '';
   html = `<img class="block1" src="${product.image}" width="400px" alt="${product.title}"><div class="block2"><div>
   <div class="title" >${product.title}</div>`;
-  if (product.weight_g) html += `<div><span class="naming">Вага: </span>${product.weight_g} г</div>`;
-  if (product.brand) html += `<div><span class="naming">Бренд: </span>${firstToUpper(product.brand)}</div>`;
-  if (product.country) html += `<div><span class="naming">Країна: </span>${firstToUpper(product.country)}</div>`;
+  if (product.weight_g)
+    html += `<div><span class="naming">Вага: </span>${product.weight_g} г</div>`;
+  if (product.brand)
+    html += `<div><span class="naming">Бренд: </span>${firstToUpper(
+      product.brand
+    )}</div>`;
+  if (product.country)
+    html += `<div><span class="naming">Країна: </span>${firstToUpper(
+      product.country
+    )}</div>`;
   const originalLinks = {};
 
   for (const shop of Object.keys(product.prices)) {
@@ -32,19 +72,19 @@ function createProductHTML(product) {
     let shopHTML = '';
     shopHTML += '<div class="shop">';
     shopHTML += `<div class="shop-title">Характеристики продукта ${dbShopsData[shop].title}</div>`;
-    originalLinks[shop] = ''
+    originalLinks[shop] = '';
     for (const feature of features) {
-      if (feature.title == 'id' && dbShopsData[shop].title == 'Auchan') 
-        originalLinks[shop] += ('-' + feature.value);
+      if (feature.title == 'id' && dbShopsData[shop].title == 'Auchan')
+        originalLinks[shop] += '-' + feature.value;
       else if (feature.title == 'url_key')
-        originalLinks[
-          shop
-        ] = `${dbShopsData[shop].product_url}${feature.value}` + originalLinks[shop];
+        originalLinks[shop] =
+          `${dbShopsData[shop].product_url}${feature.value}` +
+          originalLinks[shop];
       else
-      shopHTML += `<div class="feature"><div class="feature-description">${feature.title}</div><div class="price">${feature.value}</div></div>`;
+        shopHTML += `<div class="feature"><div class="feature-description">${feature.title}</div><div class="price">${feature.value}</div></div>`;
     }
     shopHTML += '</div>';
-    if (features.length > 2) html+= shopHTML;
+    if (features.length > 2) html += shopHTML;
   }
   html += '</div>';
 
@@ -66,7 +106,8 @@ function createProductHTML(product) {
     shopDiv.replaceWith(a);
     chartButtons.innerHTML += `<button class="tab-opener-button" data-ref="${shop}-container">${dbShopsData[shop].title} зміна ціни</button>`;
   }
-  if (shopDivs.length > 1) chartButtons.innerHTML += `<button data-ref="price-compare-container" class="tab-opener-button">Порівняти ціни</button>`;
+  if (shopDivs.length > 1)
+    chartButtons.innerHTML += `<button data-ref="price-compare-container" class="tab-opener-button">Порівняти ціни</button>`;
   return productDiv;
 }
 
@@ -89,6 +130,35 @@ async function loadProduct(productId) {
     btn.addEventListener('click', openTab);
   }
   insertBreadcrumbs(breadcrumbs);
+
+  const productMatchHolder =
+    document.getElementsByClassName('product-matching')[0];
+
+  productMatchHolder.innerHTML =
+    `<h2>Поєднання продукції</h2>` + productMatchHolder.innerHTML;
+  const productMatchDiv = productMatchHolder.getElementsByClassName(
+    'product-matching-buttons-holder'
+  )[0];
+  const productMatchButton = document.createElement('div');
+  productMatchButton.classList.add(['standard-button']);
+  if (Object.values(product.prices).length === 2) {
+    productMatchButton.innerText = "Роз'єднати продукти";
+    productMatchButton.addEventListener('click', () =>
+      disconnectProducts(productId)
+    );
+  } else {
+    productMatchButton.innerText = 'Поєднати продукти';
+    productMatchButton.addEventListener('click', () =>
+      connectProducts(productId)
+    );
+    productMatchDiv.innerHTML += `<p style="margin-bottom: 30px;">Ідентифікатор продукта для поєднання: <span style="font-weight: 600">${productId}</span></p>
+      <p style="margin-bottom: 30px;">Для того аби поєднати продукти, оберіть, ідентифікатор іншого товару з даного блоку.</p>`;
+    productMatchDiv.innerHTML +=
+      '<input type="number" min="1" id="matchable-product" class="standard-button" style="margin: 10px 0px;">';
+  }
+
+  productMatchDiv.appendChild(productMatchButton);
+  return true;
 }
 
 async function loadPrices(productId) {
@@ -108,8 +178,12 @@ async function loadPrices(productId) {
     chartHolder.setAttribute('id', `${shopId}-container`);
     chartsHolder.appendChild(chartHolder);
     const data = resJSON[shopId];
-    const currentPrice = data.filter(item => item.name=='price')[0];
-    shopsPrices.push({name: shop, dates: currentPrice.dates, data: currentPrice.data});
+    const currentPrice = data.filter((item) => item.name == 'price')[0];
+    shopsPrices.push({
+      name: shop,
+      dates: currentPrice.dates,
+      data: currentPrice.data,
+    });
     buildChart(
       shopId + '-container',
       'Зміна ціни',
@@ -159,14 +233,27 @@ async function loadPredictions(productId) {
   const method = document.getElementById('method-dropdown').value;
   const shopId = document.getElementById('shop-dropdown').value;
   const period = document.getElementById('period').value;
-  const res = await fetch('/predictions/' + method + '?' + new URLSearchParams({ id: productId, shopId, period, priceComment: 'price' }), {
-    method: 'GET',
-  });
+  const res = await fetch(
+    '/predictions/' +
+      method +
+      '?' +
+      new URLSearchParams({
+        id: productId,
+        shopId,
+        period,
+        priceComment: 'price',
+      }),
+    {
+      method: 'GET',
+    }
+  );
   if (!res.ok) return initError(await res.text());
   const json = await res.json();
 
   const periodInput = document.getElementById('period');
-  const predictionsWrapper = document.getElementsByClassName('predictions-wrapper')[0];
+  const predictionsWrapper = document.getElementsByClassName(
+    'predictions-wrapper'
+  )[0];
   predictionsWrapper.classList.remove('hidden');
 
   periodInput.setAttribute('min', json.period.min);
@@ -180,8 +267,6 @@ async function loadPredictions(productId) {
     }
   }
 
-
-
   buildChart(
     'predictions',
     'Аналіз цін',
@@ -192,24 +277,27 @@ async function loadPredictions(productId) {
     4,
     json.chart
   );
-  
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
   const pathname = new URL(location).pathname;
   const productId = pathname.split('/')[2];
 
-  await loadProduct(productId);
+  const success = await loadProduct(productId);
+  if (!success) return;
   await loadPrices(productId);
   await loadMethods();
   await loadPredictions(productId);
 
-  [...document.getElementsByClassName('p-settings')].forEach(el => el.addEventListener('input', async () => {
-    await loadPredictions(productId);
-  }));
+  [...document.getElementsByClassName('p-settings')].forEach((el) =>
+    el.addEventListener('input', async () => {
+      await loadPredictions(productId);
+    })
+  );
 
-  [...document.getElementsByClassName('p-settings')].forEach(el => el.addEventListener('click', async () => {
-    document.getElementById('predictions').classList.remove('hidden');
-  }));
-
+  [...document.getElementsByClassName('p-settings')].forEach((el) =>
+    el.addEventListener('click', async () => {
+      document.getElementById('predictions').classList.remove('hidden');
+    })
+  );
 });

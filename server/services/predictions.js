@@ -103,23 +103,26 @@ class Predictions {
   #getLagrangeInterpolationFunction(points) {
     const n = points.length - 1;
 
-    const p = function (i, j, x) {
-      if (i === j) {
-        return points[i][1];
+    function interpolate(xi) {
+      let result = 0; // Initialize result
+
+      for (let i = 0; i < n; i++) {
+        // Compute individual terms of above formula
+        let term = points[i][1];
+        for (let j = 0; j < n; j++) {
+          if (j != i)
+            term = (term * (xi - points[j][0])) / (points[i][0] - points[j][0]);
+        }
+
+        // Add current term to result
+        result += term;
       }
 
-      return (
-        ((points[j][0] - x) * p(i, j - 1, x) +
-          (x - points[i][0]) * p(i + 1, j, x)) /
-        (points[j][0] - points[i][0])
-      );
-    };
+      return result;
+    }
 
     return function (x) {
-      if (points.length === 0) {
-        return 0;
-      }
-      return p(0, n, x);
+      return interpolate(x);
     };
   }
 
@@ -154,17 +157,27 @@ class Predictions {
   }
 
   #calcInterpolationPerDay(callback, points, period, date = null) {
-    const func = callback(points);
+    const startI = points[0][0];
+    const set = points.map(([x, y]) => [
+      Math.floor((x - startI) / MS_IN_DAY),
+      y,
+    ]);
+
+    const func = callback(set);
+
     const result = [];
     const firstX = date ? date.startTimestamp : points[0][0];
     let x = firstX;
     const endX = date
       ? date.endTimestamp
       : points[points.length - 1][0] + period * MS_IN_DAY;
+    let curr = 0;
     do {
-      const y = func(x);
+      const y = func(curr);
+
       result.push([x, Number(y.toFixed(2))]);
       x += MS_IN_DAY;
+      curr++;
     } while (x <= endX);
     return result;
   }

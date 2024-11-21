@@ -48,6 +48,18 @@ const product = (fastify, _, done) => {
     reply.type('text/html').send(JSON.stringify(result));
   });
 
+  fastify.post('/products/:id/disconnect', async function (req, reply) {
+    const { id } = req.params;
+    await mainService.disconnectProducts(id);
+    reply.type('text/html').send();
+  });
+
+  fastify.post('/products/connect', async function (req, reply) {
+    const { productId, productId2 } = JSON.parse(req.body);
+    await mainService.connectProducts(+productId, +productId2);
+    reply.type('text/html').send();
+  });
+
   done();
 };
 

@@ -34,18 +34,8 @@ async function loadProductsAuchan() {
   console.log(resJSON);
 }
 
-async function loadApiUsd() {
-  const res = await fetch('/api/bank/usd', {
-    method: 'GET',
-  });
-  if (!res.ok) return initError(await res.text());
-
-  const resJSON = await res.json();
-  console.log(resJSON);
-}
-
-async function loadApiEur() {
-  const res = await fetch('/api/bank/eur', {
+async function loadApiBank() {
+  const res = await fetch('/api/bank', {
     method: 'GET',
   });
   if (!res.ok) return initError(await res.text());
@@ -81,8 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
     .getElementById('products-auchan')
     .addEventListener('click', loadProductsAuchan);
 
-  document.getElementById('api-usd').addEventListener('click', loadApiUsd);
-  document.getElementById('api-eur').addEventListener('click', loadApiEur);
+  document.getElementById('api-bank').addEventListener('click', loadApiBank);
   document
     .getElementById('api-holidays')
     .addEventListener('click', loadApiHolidays);

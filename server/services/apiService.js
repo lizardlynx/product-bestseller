@@ -4,6 +4,10 @@ const { BankGovUaApi } = require('../apiClasses/bankGovUaApi.js');
 const { addDays, datetime, toISODate } = require('../common.js');
 const { HolidayApi } = require('../apiClasses/holidayApi.js');
 
+function dateFormatFunc(date) {
+  return date.toLocaleDateString().split('/').reverse().join('');
+}
+
 class ApiService {
   async insert(currency) {
     const apiName = `Курс по валюті ${currency}`;
@@ -12,24 +16,22 @@ class ApiService {
       currency,
       async (currValues, apiId) => {
         const insertData = [];
-        if (currValues.length === 0) {
-          const [{ date: startDate }] = await db.getStartDate();
-          let currDate = new Date(startDate);
-          const endDate = new Date().toLocaleDateString();
-          do {
-            const dateFormat = currDate
-              .toLocaleDateString()
-              .split('/')
-              .reverse()
-              .join('');
+        const bankDates = currValues.map(({ date }) => dateFormatFunc(date));
+
+        const [{ date: startDate }] = await db.getStartDate();
+        let currDate = new Date(startDate);
+        const endDate = new Date().toLocaleDateString();
+
+        while (currDate.toLocaleDateString() != endDate) {
+          const dateFormat = dateFormatFunc(currDate);
+
+          if (!bankDates.includes(dateFormat)) {
             const data = await new BankGovUaApi().load(currency, dateFormat);
             insertData.push([apiId, datetime(currDate), data.rate]);
-            currDate = addDays(currDate, 1);
-          } while (currDate.toLocaleDateString() != endDate);
+          }
+          currDate = addDays(currDate, 1);
         }
 
-        const data = await new BankGovUaApi().load(currency);
-        insertData.push([apiId, datetime(), data.rate]);
         return insertData;
       }
     );
